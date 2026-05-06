@@ -112,6 +112,39 @@ bool canMove(int dx, int dy){
             }
     return true;
 }
+void rotateBlock() {
+    char tempBlock[4][4];
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            tempBlock[j][3 - i] = blocks[b][i][j];
+        }
+    }
+    bool canRotate = true;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (tempBlock[i][j] != ' ') {
+                int tx = x + j;
+                int ty = y + i;
+                if (tx < 1 || tx >= W - 1 || ty >= H - 1) {
+                    canRotate = false;
+                    break; 
+                }
+                if (board[ty][tx] != ' ') {
+                    canRotate = false;
+                    break;
+                }
+            }
+        }
+        if (!canRotate) break;
+    }
+    if (canRotate) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                blocks[b][i][j] = tempBlock[i][j];
+            }
+        }
+    }
+}
 
 int main()
 {
@@ -126,6 +159,7 @@ int main()
             if (c=='a' && canMove(-1,0)) x--;
             if (c=='d' && canMove(1,0) ) x++;
             if (c=='x' && canMove(0,1))  y++;
+            if (c=='w') rotateBlock();
             if (c=='q') break;
         }
         if (canMove(0,1)) y++;
