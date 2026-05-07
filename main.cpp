@@ -74,7 +74,7 @@ char blocks[][4][4] = {
 
 int x=4,y=0,b=1;
 void gotoxy(int x, int y) {
-    COORD c = {x, y};
+    COORD c = {(SHORT)x, (SHORT)y};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
 }
 void boardDelBlock(){
@@ -154,8 +154,8 @@ int main()
     initBoard();
     while (1){
         boardDelBlock();
-        if (kbhit()){
-            char c = getch();
+        if (_kbhit()){
+            char c = _getch();
             if (c=='a' && canMove(-1,0)) x--;
             if (c=='d' && canMove(1,0) ) x++;
             if (c=='x' && canMove(0,1))  y++;
@@ -170,7 +170,7 @@ int main()
         }
         block2Board();
         draw();
-        _sleep(200);
+        Sleep(200);
     }
     return 0;
 }
