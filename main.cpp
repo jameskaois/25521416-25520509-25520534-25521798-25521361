@@ -80,7 +80,7 @@ void gotoxy(int x, int y) {
 void boardDelBlock(){
     for (int i = 0 ; i < 4 ; i++)
         for (int j = 0 ; j < 4 ; j++)
-            if (blocks[b][i][j] != ' ' && y+j < H)
+            if (blocks[b][i][j] != ' ' && y+i < H)
                 board[y+i][x+j] = ' ';
 }
 void block2Board(){
@@ -178,11 +178,13 @@ void removeLine() {
 int main()
 {
     srand(time(0));
-    b = rand() % 7;
+    b = rand() % 16;
     system("cls");
     initBoard();
+
     while (1){
         boardDelBlock();
+        
         if (_kbhit()){
             char c = _getch();
             if (c=='a' && canMove(-1,0)) x--;
@@ -191,12 +193,15 @@ int main()
             if (c=='w') rotateBlock();
             if (c=='q') break;
         }
-        if (canMove(0,1)) y++;
+
+        if (canMove(0,1)) {y++;}
+
         else {
             block2Board();
-            // removeLine();
+            removeLine();
             x = 5; y = 0; b = rand() % 7;
         }
+
         block2Board();
         draw();
         Sleep(200);
