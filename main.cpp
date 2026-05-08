@@ -3,7 +3,7 @@
 #include <windows.h>
 using namespace std;
 #define H 20
-#define W 15
+#define W 20
 char board[H][W] = {} ;
 char blocks[][4][4] = {
         {{' ','I',' ',' '},
@@ -92,14 +92,25 @@ void block2Board(){
 void initBoard(){
     for (int i = 0 ; i < H ; i++)
         for (int j = 0 ; j < W ; j++)
-            if ((i==H-1) || (j==0) || (j == W-1)) board[i][j] = '#';
-            else board[i][j] = ' ';
+            if (i == 0 || i == H-1 || j == 0 || j == W-1)
+                board[i][j] = '#';
+            else
+                board[i][j] = ' ';
 }
+
 void draw(){
     gotoxy(0,0);
-    for (int i = 0 ; i < H ; i++, cout<<endl)
-        for (int j = 0 ; j < W ; j++)
-            cout<<board[i][j];
+    for (int i = 0; i < H; i++){
+        for (int j = 0; j < W; j++){
+            if (board[i][j] == '#')
+                cout << "##";     
+            else if (board[i][j] == ' ')
+                cout << "  ";      
+            else
+                cout << "██";      
+        }
+        cout << endl;
+    }
 }
 bool canMove(int dx, int dy){
     for (int i = 0 ; i < 4 ; i++)
@@ -127,7 +138,7 @@ void rotateBlock() {
                 int ty = y + i;
                 if (tx < 1 || tx >= W - 1 || ty >= H - 1) {
                     canRotate = false;
-                    break; 
+                    break;
                 }
                 if (board[ty][tx] != ' ') {
                     canRotate = false;
