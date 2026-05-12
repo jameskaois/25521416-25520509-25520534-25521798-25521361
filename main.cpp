@@ -1,6 +1,7 @@
 #include <iostream>
 #include <conio.h>
 #include <windows.h>
+#include <time.h>
 using namespace std;
 
 #define H 20
@@ -9,70 +10,41 @@ using namespace std;
 int gameSpeed = 200; 
 
 char board[H][W] = {} ;
-const char blocks[][4][4] = {
+
+const char blocks[7][4][4] = {
         {{' ','I',' ',' '},
          {' ','I',' ',' '},
          {' ','I',' ',' '},
          {' ','I',' ',' '}},
-        {{' ','I',' ',' '},
-         {' ','I',' ',' '},
-         {' ','I',' ',' '},
-         {' ','I',' ',' '}},
+        
         {{' ',' ',' ',' '},
          {' ','O','O',' '},
          {' ','O','O',' '},
          {' ',' ',' ',' '}},
+        
         {{' ',' ',' ',' '},
-         {' ','O','O',' '},
-         {' ','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','O','O',' '},
-         {' ','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','O','O',' '},
-         {' ','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','O','O',' '},
-         {' ','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','O','O',' '},
-         {' ','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','O','O',' '},
-         {' ','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {'I','I','I','I'},
-         {' ',' ',' ',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','O','O',' '},
-         {' ','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','T',' ',' '},
          {'T','T','T',' '},
+         {' ','T',' ',' '},
          {' ',' ',' ',' '}},
+        
         {{' ',' ',' ',' '},
          {' ','S','S',' '},
          {'S','S',' ',' '},
          {' ',' ',' ',' '}},
+         
         {{' ',' ',' ',' '},
          {'Z','Z',' ',' '},
          {' ','Z','Z',' '},
          {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {'J',' ',' ',' '},
-         {'J','J','J',' '},
+         
+        {{' ','J',' ',' '},
+         {' ','J',' ',' '},
+         {'J','J',' ',' '},
          {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ',' ','L',' '},
-         {'L','L','L',' '},
+         
+        {{' ','L',' ',' '},
+         {' ','L',' ',' '},
+         {' ','L','L',' '},
          {' ',' ',' ',' '}}
 };
 
@@ -162,28 +134,43 @@ void rotateBlock() {
 }
 
 int removeLine() {
-    int linesCleared = 0;
-    int j;
-    for (int i = H - 2; i > 0; i--) {
-        for (j = 1; j < W - 1; j++)
-            if (board[i][j] == ' ') break;
-        if (j == W - 1) {
-            linesCleared++;
-            for (int ii = i; ii > 1; ii--)
-                for (int j = 1; j < W - 1; j++) board[ii][j] = board[ii - 1][j];
+    int linesCleared = 0; 
+
+    for (int i = H - 2; i >= 1; i--) {
+        bool full = true; 
+
+        for (int j = 1; j < W - 1; j++) {
+            if (board[i][j] == ' ') {
+                full = false;
+                break;
+            }
+        }
+
+        if (full) {
+            linesCleared++; 
+
+            for (int k = i; k > 1; k--) {
+                for (int j = 1; j < W - 1; j++) {
+                    board[k][j] = board[k - 1][j];
+                }
+            }
+            for (int j = 1; j < W - 1; j++) {
+                board[1][j] = ' ';
+            }
             i++;
+
             draw();
             Sleep(gameSpeed / 2); 
         }
     }
-    return linesCleared;
+    return linesCleared; 
 }
 
 void spawnNewBlock() {
     x = W / 2 - 2; 
-    b = rand() % 16;
     
-    // Copy hình dáng
+    b = rand() % 7;
+    
     for(int i = 0; i < 4; i++)
         for(int j = 0; j < 4; j++)
             activeBlockShape[i][j] = blocks[b][i][j];
@@ -228,11 +215,11 @@ int main()
             char c = _getch();
             if (c=='a' && canMove(-1,0)) x--;
             if (c=='d' && canMove(1,0) ) x++;
-            if (c=='w' && canMove(0,1))  y++;
-            if (c=='s') rotateBlock();
+            if (c=='w') rotateBlock();           
+            if (c=='s' && canMove(0,1))  y++;    
             if (c=='q') exit(0);
         }
-        
+    
         timer += 10;
         
         if (timer >= gameSpeed) {
@@ -261,6 +248,7 @@ int main()
         }
         block2Board();
         draw();
+
         Sleep(10); 
     }
     gotoxy(0, H + 2); 
