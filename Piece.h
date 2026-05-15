@@ -20,7 +20,7 @@ public:
     void moveRight();
     void moveDown();
 
-    void rotate();
+    virtual void rotate();
 
     bool canMove(int dx, int dy, char board[H][W]);
 
@@ -32,4 +32,62 @@ public:
     int getY();
 
     char getCell(int i, int j);
+};
+
+class PieceO : public Piece {
+public:
+    void initShape() override {
+        shape[1][1] = 'O'; shape[1][2] = 'O';
+        shape[2][1] = 'O'; shape[2][2] = 'O';
+    }
+    void rotate() override {
+    }
+};
+
+class PieceI : public Piece {
+public:
+    void initShape() override {
+        shape[1][0] = 'I'; shape[1][1] = 'I';
+        shape[1][2] = 'I'; shape[1][3] = 'I';
+    }
+};
+
+class PieceT : public Piece {
+public:
+    void initShape() override {
+        shape[1][1] = 'T'; 
+        shape[2][0] = 'T'; shape[2][1] = 'T'; shape[2][2] = 'T';
+    }
+};
+
+class PieceL : public Piece {
+public:
+    void initShape() override {
+        shape[1][2] = 'L'; 
+        shape[2][0] = 'L'; shape[2][1] = 'L'; shape[2][2] = 'L';
+    }
+};
+
+class PieceJ : public Piece {
+public:
+    void initShape() override {
+        shape[1][0] = 'J'; 
+        shape[2][0] = 'J'; shape[2][1] = 'J'; shape[2][2] = 'J';
+    }
+};
+
+class PieceS : public Piece {
+public:
+    void initShape() override {
+        shape[1][1] = 'S'; shape[1][2] = 'S';
+        shape[2][0] = 'S'; shape[2][1] = 'S';
+    }
+};
+
+class PieceZ : public Piece {
+public:
+    void initShape() override {
+        shape[1][0] = 'Z'; shape[1][1] = 'Z';
+        shape[2][1] = 'Z'; shape[2][2] = 'Z';
+    }
 };
