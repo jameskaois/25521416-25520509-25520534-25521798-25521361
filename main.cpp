@@ -59,7 +59,7 @@ void gotoxy(int x, int y) {
 void boardDelBlock(){
     for (int i = 0 ; i < 4 ; i++)
         for (int j = 0 ; j < 4 ; j++)
-            if (activeBlockShape[i][j] != ' ' && y+i < H)
+            if (activeBlockShape[i][j] != ' ' && y + i >= 0 && y+i < H)
                 board[y+i][x+j] = ' ';
 }
 
@@ -201,10 +201,11 @@ int main()
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
 
     srand(time(0));
-    spawnNewBlock();
-
-    system("cls");
     initBoard();
+
+    spawnNewBlock();
+    system("cls");
+    
     
     int timer = 0;
     
