@@ -132,6 +132,22 @@ int main()
                     timer = gameSpeed; // Ép block khóa ngay lập tức
                 }
 
+                // Pause Game
+                if (c == 'p' || c == 'P') {
+                    gotoxy(W * 2 + 5, H / 2);
+                    cout << "TT: Tạm dừng   "; 
+                    while (true) {
+                        if (_kbhit()) {
+                            char resumeKey = _getch();
+                            if (resumeKey == -32 || resumeKey == 224) _getch(); 
+                            break;
+                        }
+                        Sleep(100); 
+                    }
+                    gotoxy(W * 2 + 5, H / 2);
+                    cout << "               "; 
+                }
+
                 if (c=='q' || c=='Q') exit(0);
             }
         }
