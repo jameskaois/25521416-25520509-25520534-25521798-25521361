@@ -13,6 +13,7 @@ protected:
 
 public:
     Piece();
+    virtual ~Piece() {}
 
     virtual void initShape() = 0;
 
@@ -20,7 +21,7 @@ public:
     void moveRight();
     void moveDown();
 
-    virtual void rotate();
+    virtual void rotate(char board[H][W]);
 
     bool canMove(int dx, int dy, char board[H][W]);
 
@@ -40,7 +41,7 @@ public:
         shape[1][1] = 'O'; shape[1][2] = 'O';
         shape[2][1] = 'O'; shape[2][2] = 'O';
     }
-    void rotate() override {
+    void rotate(char board[H][W]) override {
     }
 };
 
