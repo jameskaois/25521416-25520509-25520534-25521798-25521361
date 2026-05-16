@@ -132,7 +132,7 @@ int main()
                     timer = gameSpeed; // Ép block khóa ngay lập tức
                 }
 
-                // Pause Game (Thêm mới ở lần 2)
+                // Pause Game
                 if (c == 'p' || c == 'P') {
                     gotoxy(W * 2 + 5, H / 2);
                     cout << "TT: Tạm dừng   "; 
