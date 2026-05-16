@@ -29,7 +29,7 @@ void Piece::moveDown()
     y++;
 }
 
-void Piece::rotate()
+void Piece::rotate(char board[H][W])
 {
     char temp[4][4];
 
@@ -41,11 +41,29 @@ void Piece::rotate()
         }
     }
 
-    for (int i = 0; i < 4; i++)
-    {
-        for (int j = 0; j < 4; j++)
-        {
-            shape[i][j] = temp[i][j];
+    bool canRotate = true;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (temp[i][j] != ' ') {
+                int tx = x + j;
+                int ty = y + i;
+
+                if (tx < 1 || tx >= W - 1 || ty >= H - 1 || ty < 1) {
+                    canRotate = false; break;
+                }
+                if (board[ty][tx] != ' ') {
+                    canRotate = false; break;
+                }
+            }
+        }
+        if (!canRotate) break;
+    }
+
+    if (canRotate) {
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                shape[i][j] = temp[i][j];
+            }
         }
     }
 }
@@ -93,7 +111,7 @@ void Piece::boardDelBlock(char board[H][W])
     {
         for (int j = 0; j < 4; j++)
         {
-            if (shape[i][j] != ' ' && y + i < H)
+            if (shape[i][j] != ' ' && y + i >= 0 && y + i < H)
             {
                 board[y + i][x + j] = ' ';
             }

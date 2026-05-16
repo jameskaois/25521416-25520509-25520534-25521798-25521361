@@ -2,75 +2,25 @@
 #include <conio.h>
 #include <windows.h>
 #include <time.h>
+#include "Piece.h"
+
 using namespace std;
 
 #define H 20
 #define W 20
 
 int gameSpeed = 200; 
+char board[H][W] = {};
 
-char board[H][W] = {} ;
-
-const char blocks[7][4][4] = {
-        {{' ','I',' ',' '},
-         {' ','I',' ',' '},
-         {' ','I',' ',' '},
-         {' ','I',' ',' '}},
-        
-        {{' ',' ',' ',' '},
-         {' ','O','O',' '},
-         {' ','O','O',' '},
-         {' ',' ',' ',' '}},
-        
-        {{' ',' ',' ',' '},
-         {'T','T','T',' '},
-         {' ','T',' ',' '},
-         {' ',' ',' ',' '}},
-        
-        {{' ',' ',' ',' '},
-         {' ','S','S',' '},
-         {'S','S',' ',' '},
-         {' ',' ',' ',' '}},
-         
-        {{' ',' ',' ',' '},
-         {'Z','Z',' ',' '},
-         {' ','Z','Z',' '},
-         {' ',' ',' ',' '}},
-         
-        {{' ','J',' ',' '},
-         {' ','J',' ',' '},
-         {'J','J',' ',' '},
-         {' ',' ',' ',' '}},
-         
-        {{' ','L',' ',' '},
-         {' ','L',' ',' '},
-         {' ','L','L',' '},
-         {' ',' ',' ',' '}}
-};
-
-char activeBlockShape[4][4]; 
-int x = W / 2 - 2, y = 1, b = 1;
+// Dùng một con trỏ đa hình duy nhất để quản lý khối gạch hiện tại
+Piece* currentPiece = nullptr;
 
 void gotoxy(int x, int y) {
     COORD c = {(SHORT)x, (SHORT)y};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
 }
 
-void boardDelBlock(){
-    for (int i = 0 ; i < 4 ; i++)
-        for (int j = 0 ; j < 4 ; j++)
-            if (activeBlockShape[i][j] != ' ' && y + i >= 0 && y+i < H)
-                board[y+i][x+j] = ' ';
-}
-
-void block2Board(){
-    for (int i = 0 ; i < 4 ; i++)
-        for (int j = 0 ; j < 4 ; j++)
-            if (activeBlockShape[i][j] != ' ' && y+i < H )
-                board[y+i][x+j] = activeBlockShape[i][j];
-}
-
-void initBoard(){
+void initBoard() {
     for (int i = 0 ; i < H ; i++)
         for (int j = 0 ; j < W ; j++)
             if (i == 0 || i == H-1 || j == 0 || j == W-1)
@@ -79,7 +29,7 @@ void initBoard(){
                 board[i][j] = ' ';
 }
 
-void draw(){
+void draw() {
     gotoxy(0,0);
     for (int i = 0; i < H; i++){
         for (int j = 0; j < W; j++){
@@ -91,64 +41,18 @@ void draw(){
     }
 }
 
-bool canMove(int dx, int dy){
-    for (int i = 0 ; i < 4 ; i++)
-        for (int j = 0 ; j < 4 ; j++)
-            if (activeBlockShape[i][j] != ' '){
-                int tx = x + j + dx;
-                int ty = y + i + dy;
-                if ( tx < 1 || tx >= W-1 || ty >= H-1 || ty < 1) return false;
-                if ( board[ty][tx] != ' ') return false;
-            }
-    return true;
-}
-
-void rotateBlock() {
-    char tempBlock[4][4];
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            tempBlock[j][3 - i] = activeBlockShape[i][j];
-        }
-    }
-    bool canRotate = true;
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            if (tempBlock[i][j] != ' ') {
-                int tx = x + j;
-                int ty = y + i;
-                if (tx < 1 || tx >= W - 1 || ty >= H - 1 || ty < 1) {
-                    canRotate = false; break;
-                }
-                if (board[ty][tx] != ' ') {
-                    canRotate = false; break;
-                }
-            }
-        }
-        if (!canRotate) break;
-    }
-    if (canRotate) {
-        for (int i = 0; i < 4; i++)
-            for (int j = 0; j < 4; j++)
-                activeBlockShape[i][j] = tempBlock[i][j];
-    }
-}
-
 int removeLine() {
     int linesCleared = 0; 
-
     for (int i = H - 2; i >= 1; i--) {
         bool full = true; 
-
         for (int j = 1; j < W - 1; j++) {
             if (board[i][j] == ' ') {
                 full = false;
                 break;
             }
         }
-
         if (full) {
             linesCleared++; 
-
             for (int k = i; k > 1; k--) {
                 for (int j = 1; j < W - 1; j++) {
                     board[k][j] = board[k - 1][j];
@@ -158,7 +62,6 @@ int removeLine() {
                 board[1][j] = ' ';
             }
             i++;
-
             draw();
             Sleep(gameSpeed / 2); 
         }
@@ -167,29 +70,24 @@ int removeLine() {
 }
 
 void spawnNewBlock() {
-    x = W / 2 - 2; 
-    
-    b = rand() % 7;
-    
-    for(int i = 0; i < 4; i++)
-        for(int j = 0; j < 4; j++)
-            activeBlockShape[i][j] = blocks[b][i][j];
-
-    int offset = 0;
-    for (int i = 0; i < 4; i++) {
-        bool hasBlock = false;
-        for (int j = 0; j < 4; j++) {
-            if (activeBlockShape[i][j] != ' ') {
-                hasBlock = true;
-                break;
-            }
-        }
-        if (hasBlock) {
-            offset = i;
-            break;
-        }
+    // Xóa khối cũ khỏi bộ nhớ để tránh tràn RAM
+    if (currentPiece != nullptr) {
+        delete currentPiece;
     }
-    y = 1 - offset;
+    
+    int b = rand() % 7;
+    switch(b) {
+        case 0: currentPiece = new PieceI(); break;
+        case 1: currentPiece = new PieceO(); break;
+        case 2: currentPiece = new PieceT(); break;
+        case 3: currentPiece = new PieceS(); break;
+        case 4: currentPiece = new PieceZ(); break;
+        case 5: currentPiece = new PieceJ(); break;
+        case 6: currentPiece = new PieceL(); break;
+    }
+    
+    // Nạp hình dáng tương ứng của khối con
+    currentPiece->initShape();
 }
 
 int main()
@@ -201,32 +99,37 @@ int main()
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
 
     srand(time(0));
+    
+    // Thứ tự đã được cập nhật
     initBoard();
-
     spawnNewBlock();
+    
     system("cls");
-    
-    
     int timer = 0;
     
     while (1){
-        boardDelBlock();
+        // Xóa vết cũ bằng phương thức của class
+        currentPiece->boardDelBlock(board);
         
         while (_kbhit()){
             char c = _getch();
-            if (c=='a' && canMove(-1,0)) x--;
-            if (c=='d' && canMove(1,0) ) x++;
-            if (c=='w') rotateBlock();           
-            if (c=='s' && canMove(0,1))  y++;    
+            if (c=='a' && currentPiece->canMove(-1, 0, board)) currentPiece->moveLeft();
+            if (c=='d' && currentPiece->canMove(1, 0, board)) currentPiece->moveRight();
+            
+            // Đã truyền biến board vào để kiểm tra va chạm
+            if (c=='w') currentPiece->rotate(board);           
+            
+            if (c=='s' && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();    
             if (c=='q') exit(0);
         }
     
         timer += 10;
         
         if (timer >= gameSpeed) {
-            if (canMove(0,1)) y++;
-            else {
-                block2Board();
+            if (currentPiece->canMove(0, 1, board)) {
+                currentPiece->moveDown();
+            } else {
+                currentPiece->block2Board(board);
                 
                 int clearedLines = removeLine(); 
                 if (clearedLines > 0) {
@@ -236,8 +139,8 @@ int main()
                 
                 spawnNewBlock();
 
-                if (!canMove(0, 0)) {
-                    block2Board(); 
+                if (!currentPiece->canMove(0, 0, board)) {
+                    currentPiece->block2Board(board); 
                     draw();        
                     gotoxy(W * 2 + 5, H / 2);
                     cout << "GAME OVER!";
@@ -247,7 +150,9 @@ int main()
             }
             timer = 0;
         }
-        block2Board();
+        
+        // Vẽ khối mới vào bảng
+        currentPiece->block2Board(board);
         draw();
 
         Sleep(10); 
