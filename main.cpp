@@ -2,6 +2,7 @@
 #include <conio.h>
 #include <windows.h>
 #include <time.h>
+#include <vector>
 #include "Piece.h"
 
 using namespace std;
@@ -9,7 +10,7 @@ using namespace std;
 #define H 20
 #define W 20
 
-int gameSpeed = 200; 
+int gameSpeed = 400; 
 char board[H][W] = {};
 
 Piece* currentPiece = nullptr;
@@ -40,8 +41,11 @@ void draw() {
     }
 }
 
+// Logic mới cho tính năng ăn điểm
 int removeLine() {
-    int linesCleared = 0; 
+    vector<int> fullLines;
+    
+    // Bước 1: Tìm tất cả các hàng đã được lấp đầy
     for (int i = H - 2; i >= 1; i--) {
         bool full = true; 
         for (int j = 1; j < W - 1; j++) {
@@ -51,21 +55,60 @@ int removeLine() {
             }
         }
         if (full) {
-            linesCleared++; 
-            for (int k = i; k > 1; k--) {
-                for (int j = 1; j < W - 1; j++) {
-                    board[k][j] = board[k - 1][j];
-                }
-            }
-            for (int j = 1; j < W - 1; j++) {
-                board[1][j] = ' ';
-            }
-            i++;
-            draw();
-            Sleep(gameSpeed / 2); 
+            fullLines.push_back(i);
         }
     }
-    return linesCleared; 
+
+    // Nếu không có hàng nào đầy thì thoát luôn
+    if (fullLines.empty()) return 0; 
+
+    // Bước 2: Hiệu ứng nhấp nháy 3 lần cho các hàng ăn điểm
+    for (int blink = 0; blink < 3; blink++) {
+        // Tắt gạch (thành khoảng trắng)
+        for (int i : fullLines) {
+            for (int j = 1; j < W - 1; j++) board[i][j] = ' ';
+        }
+        draw();
+        Sleep(10);
+
+        // Bật gạch (dùng ký tự 'O' để hàm draw() in ra ██)
+        for (int i : fullLines) {
+            for (int j = 1; j < W - 1; j++) board[i][j] = 'O'; 
+        }
+        draw();
+        Sleep(10);
+    }
+
+    // Bước 3: Dọn dẹp hàng và kéo phần gạch phía trên rớt xuống
+    int writeRow = H - 2;
+    for (int readRow = H - 2; readRow >= 1; readRow--) {
+        bool isFull = false;
+        for (int r : fullLines) {
+            if (r == readRow) {
+                isFull = true;
+                break;
+            }
+        }
+
+        // Nếu hàng đang đọc không phải hàng bị xóa, thì chép nó xuống dưới
+        if (!isFull) {
+            for (int j = 1; j < W - 1; j++) {
+                board[writeRow][j] = board[readRow][j];
+            }
+            writeRow--;
+        }
+    }
+
+    // Làm trống các hàng trên cùng còn dư lại
+    while (writeRow >= 1) {
+        for (int j = 1; j < W - 1; j++) {
+            board[writeRow][j] = ' ';
+        }
+        writeRow--;
+    }
+
+    draw();
+    return fullLines.size(); 
 }
 
 void spawnNewBlock() {
@@ -129,7 +172,7 @@ int main()
                     while (currentPiece->canMove(0, 1, board)) {
                         currentPiece->moveDown();
                     }
-                    timer = gameSpeed; // Ép block khóa ngay lập tức
+                    timer = gameSpeed; 
                 }
 
                 // Pause Game
@@ -162,7 +205,7 @@ int main()
                 
                 int clearedLines = removeLine(); 
                 if (clearedLines > 0) {
-                    gameSpeed -= (clearedLines * 15);
+                    gameSpeed -= (clearedLines * 2); // Chỉnh sửa tốc độ tăng vừa phải
                     if (gameSpeed < 50) gameSpeed = 50; 
                 }
                 
