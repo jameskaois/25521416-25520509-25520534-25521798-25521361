@@ -12,7 +12,6 @@ using namespace std;
 int gameSpeed = 200; 
 char board[H][W] = {};
 
-// Dùng một con trỏ đa hình duy nhất để quản lý khối gạch hiện tại
 Piece* currentPiece = nullptr;
 
 void gotoxy(int x, int y) {
@@ -70,7 +69,6 @@ int removeLine() {
 }
 
 void spawnNewBlock() {
-    // Xóa khối cũ khỏi bộ nhớ để tránh tràn RAM
     if (currentPiece != nullptr) {
         delete currentPiece;
     }
@@ -86,7 +84,6 @@ void spawnNewBlock() {
         case 6: currentPiece = new PieceL(); break;
     }
     
-    // Nạp hình dáng tương ứng của khối con
     currentPiece->initShape();
 }
 
@@ -100,7 +97,6 @@ int main()
 
     srand(time(0));
     
-    // Thứ tự đã được cập nhật
     initBoard();
     spawnNewBlock();
     
@@ -108,19 +104,52 @@ int main()
     int timer = 0;
     
     while (1){
-        // Xóa vết cũ bằng phương thức của class
         currentPiece->boardDelBlock(board);
         
         while (_kbhit()){
             char c = _getch();
-            if (c=='a' && currentPiece->canMove(-1, 0, board)) currentPiece->moveLeft();
-            if (c=='d' && currentPiece->canMove(1, 0, board)) currentPiece->moveRight();
             
-            // Đã truyền biến board vào để kiểm tra va chạm
-            if (c=='w') currentPiece->rotate(board);           
-            
-            if (c=='s' && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();    
-            if (c=='q') exit(0);
+            // Xử lý phím mũi tên
+            if (c == -32 || c == 224) {
+                c = _getch();
+                if (c == 75 && currentPiece->canMove(-1, 0, board)) currentPiece->moveLeft();  
+                if (c == 77 && currentPiece->canMove(1, 0, board)) currentPiece->moveRight(); 
+                if (c == 72) currentPiece->rotate(board);                                     
+                if (c == 80 && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();  // Soft Drop
+            } else {
+                if ((c=='a' || c=='A') && currentPiece->canMove(-1, 0, board)) currentPiece->moveLeft();
+                if ((c=='d' || c=='D') && currentPiece->canMove(1, 0, board)) currentPiece->moveRight();
+                if (c=='w' || c=='W') currentPiece->rotate(board);           
+                
+                // Soft Drop
+                if ((c=='s' || c=='S' || c=='x' || c=='X') && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();    
+                
+                // Hard Drop
+                if (c == ' ') {
+                    while (currentPiece->canMove(0, 1, board)) {
+                        currentPiece->moveDown();
+                    }
+                    timer = gameSpeed; // Ép block khóa ngay lập tức
+                }
+
+                // Pause Game (Thêm mới ở lần 2)
+                if (c == 'p' || c == 'P') {
+                    gotoxy(W * 2 + 5, H / 2);
+                    cout << "TT: Tạm dừng   "; 
+                    while (true) {
+                        if (_kbhit()) {
+                            char resumeKey = _getch();
+                            if (resumeKey == -32 || resumeKey == 224) _getch(); 
+                            break;
+                        }
+                        Sleep(100); 
+                    }
+                    gotoxy(W * 2 + 5, H / 2);
+                    cout << "               "; 
+                }
+
+                if (c=='q' || c=='Q') exit(0);
+            }
         }
     
         timer += 10;
@@ -151,10 +180,8 @@ int main()
             timer = 0;
         }
         
-        // Vẽ khối mới vào bảng
         currentPiece->block2Board(board);
         draw();
-
         Sleep(10); 
     }
     gotoxy(0, H + 2); 
