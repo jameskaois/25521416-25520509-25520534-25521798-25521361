@@ -33,6 +33,9 @@ const int EASY_SPEED_STEP = 5;
 const int NORMAL_SPEED_STEP = 3;
 const int HARD_SPEED_STEP = 2;
 
+const int HARD_GARBAGE_CHANCE = 25;
+const int HARD_GARBAGE_HOLES = 2;
+
 int gameSpeed = NORMAL_GAME_SPEED; 
 char board[H][W] = {};
 
@@ -165,6 +168,13 @@ void drawGameInfo() {
 
     gotoxy(W * 2 + 5, 9);
     cout << "P: Pause | Q: Quit";
+
+    gotoxy(W * 2 + 5, 11);
+    if (currentMode == HARD_MODE) {
+        cout << "Hard: " << HARD_GARBAGE_CHANCE << "% garbage/spawn";
+    } else {
+        cout << "                         ";
+    }
 }
 
 void showModeMenu() {
@@ -174,7 +184,7 @@ void showModeMenu() {
     cout << "==============================\n";
     cout << "1. Easy Mode   - Toc do cham\n";
     cout << "2. Normal Mode - Toc do mac dinh\n";
-    cout << "3. Hard Mode   - Toc do nhanh\n";
+    cout << "3. Hard Mode   - Toc do nhanh + co the xuat hien gach rac\n";
     cout << "==============================\n";
     cout << "Chon che do choi (1-3): ";
 
@@ -207,6 +217,41 @@ void initBoard() {
             else
                 board[i][j] = ' ';
 }
+
+void addHardModeGarbageLine() {
+    bool hole[W] = {};
+
+    for (int count = 0; count < HARD_GARBAGE_HOLES; count++) {
+        int randomHole;
+        do {
+            randomHole = 1 + rand() % (W - 2);
+        } while (hole[randomHole]);
+
+        hole[randomHole] = true;
+    }
+
+    // Đẩy toàn bộ gạch hiện có lên 1 hàng, chỉ dịch phần bên trong tường.
+    for (int i = 1; i < H - 2; i++) {
+        for (int j = 1; j < W - 1; j++) {
+            board[i][j] = board[i + 1][j];
+        }
+    }
+
+    // Tạo hàng gạch rác ở đáy, có lỗ để người chơi vẫn có thể xử lý.
+    for (int j = 1; j < W - 1; j++) {
+        board[H - 2][j] = hole[j] ? ' ' : 'G';
+    }
+}
+
+void maybeAddHardModeGarbageLine() {
+    if (currentMode != HARD_MODE) return;
+
+    int randomPercent = rand() % 100;
+    if (randomPercent < HARD_GARBAGE_CHANCE) {
+        addHardModeGarbageLine();
+    }
+}
+
 
 void draw() {
     gotoxy(0,0);
@@ -294,7 +339,11 @@ int removeLine() {
     return fullLines.size(); 
 }
 
-void spawnNewBlock() {
+void spawnNewBlock(bool allowGarbage = true) {
+    if (allowGarbage) {
+        maybeAddHardModeGarbageLine();
+    }
+
     if (currentPiece != nullptr) {
         delete currentPiece;
     }
@@ -325,7 +374,7 @@ int main()
     
     showModeMenu();
     initBoard();
-    spawnNewBlock();
+    spawnNewBlock(false);
     
     system("cls");
     int timer = 0;
