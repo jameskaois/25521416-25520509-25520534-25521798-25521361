@@ -1,9 +1,12 @@
 #include <iostream>
 #include <conio.h>
 #include <windows.h>
+#include <mmsystem.h>
 #include <time.h>
 #include <vector>
 #include "Piece.h"
+
+#pragma comment(lib, "winmm.lib")
 
 using namespace std;
 
@@ -14,6 +17,52 @@ int gameSpeed = 400;
 char board[H][W] = {};
 
 Piece* currentPiece = nullptr;
+
+
+// ================== SOUND EFFECTS - PHẦN ĐƯỢC GIAO ==================
+// Dùng âm thanh hệ thống của Windows để không cần thêm file .wav ngoài.
+// Nếu nhóm có file âm thanh riêng, có thể đổi SND_ALIAS thành SND_FILENAME
+// và thay tên dưới đây bằng đường dẫn file, ví dụ: TEXT("sounds\\rotate.wav").
+const DWORD SOUND_FLAGS = SND_ALIAS | SND_ASYNC | SND_NODEFAULT;
+
+void playRotateSound() {
+    PlaySound(TEXT("SystemAsterisk"), NULL, SOUND_FLAGS);
+}
+
+void playLandSound() {
+    PlaySound(TEXT("SystemHand"), NULL, SOUND_FLAGS);
+}
+
+void playClearLineSound() {
+    PlaySound(TEXT("SystemExclamation"), NULL, SOUND_FLAGS);
+}
+
+void rotateCurrentPieceWithSound() {
+    if (currentPiece == nullptr) return;
+
+    char oldShape[4][4];
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            oldShape[i][j] = currentPiece->getCell(i, j);
+        }
+    }
+
+    currentPiece->rotate(board);
+
+    bool rotated = false;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (oldShape[i][j] != currentPiece->getCell(i, j)) {
+                rotated = true;
+                break;
+            }
+        }
+        if (rotated) break;
+    }
+
+    if (rotated) playRotateSound();
+}
+// =====================================================================
 
 void gotoxy(int x, int y) {
     COORD c = {(SHORT)x, (SHORT)y};
@@ -61,6 +110,9 @@ int removeLine() {
 
     // Nếu không có hàng nào đầy thì thoát luôn
     if (fullLines.empty()) return 0; 
+
+    // Phát nhạc ngắn ngay trong removeLine() khi xử lý ăn hàng thành công
+    playClearLineSound();
 
     // Bước 2: Hiệu ứng nhấp nháy 3 lần cho các hàng ăn điểm
     for (int blink = 0; blink < 3; blink++) {
@@ -157,12 +209,12 @@ int main()
                 c = _getch();
                 if (c == 75 && currentPiece->canMove(-1, 0, board)) currentPiece->moveLeft();  
                 if (c == 77 && currentPiece->canMove(1, 0, board)) currentPiece->moveRight(); 
-                if (c == 72) currentPiece->rotate(board);                                     
+                if (c == 72) rotateCurrentPieceWithSound();                                     
                 if (c == 80 && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();  // Soft Drop
             } else {
                 if ((c=='a' || c=='A') && currentPiece->canMove(-1, 0, board)) currentPiece->moveLeft();
                 if ((c=='d' || c=='D') && currentPiece->canMove(1, 0, board)) currentPiece->moveRight();
-                if (c=='w' || c=='W') currentPiece->rotate(board);           
+                if (c=='w' || c=='W') rotateCurrentPieceWithSound();           
                 
                 // Soft Drop
                 if ((c=='s' || c=='S' || c=='x' || c=='X') && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();    
@@ -201,6 +253,7 @@ int main()
             if (currentPiece->canMove(0, 1, board)) {
                 currentPiece->moveDown();
             } else {
+                playLandSound();
                 currentPiece->block2Board(board);
                 
                 int clearedLines = removeLine(); 
