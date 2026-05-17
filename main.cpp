@@ -23,16 +23,18 @@ Piece* currentPiece = nullptr;
 // Dùng âm thanh hệ thống của Windows để không cần thêm file .wav ngoài.
 // Nếu nhóm có file âm thanh riêng, có thể đổi SND_ALIAS thành SND_FILENAME
 // và thay tên dưới đây bằng đường dẫn file, ví dụ: TEXT("sounds\\rotate.wav").
+const DWORD SOUND_FLAGS = SND_ALIAS | SND_ASYNC | SND_NODEFAULT;
+
 void playRotateSound() {
-    PlaySound(TEXT("SystemAsterisk"), NULL, SND_ALIAS | SND_ASYNC | SND_NODEFAULT);
+    PlaySound(TEXT("SystemAsterisk"), NULL, SOUND_FLAGS);
 }
 
 void playLandSound() {
-    PlaySound(TEXT("SystemHand"), NULL, SND_ALIAS | SND_ASYNC | SND_NODEFAULT);
+    PlaySound(TEXT("SystemHand"), NULL, SOUND_FLAGS);
 }
 
 void playClearLineSound() {
-    PlaySound(TEXT("SystemExclamation"), NULL, SND_ALIAS | SND_ASYNC | SND_NODEFAULT);
+    PlaySound(TEXT("SystemExclamation"), NULL, SOUND_FLAGS);
 }
 
 void rotateCurrentPieceWithSound() {
@@ -108,6 +110,9 @@ int removeLine() {
 
     // Nếu không có hàng nào đầy thì thoát luôn
     if (fullLines.empty()) return 0; 
+
+    // Phát nhạc ngắn ngay trong removeLine() khi xử lý ăn hàng thành công
+    playClearLineSound();
 
     // Bước 2: Hiệu ứng nhấp nháy 3 lần cho các hàng ăn điểm
     for (int blink = 0; blink < 3; blink++) {
@@ -253,7 +258,6 @@ int main()
                 
                 int clearedLines = removeLine(); 
                 if (clearedLines > 0) {
-                    playClearLineSound();
                     gameSpeed -= (clearedLines * 2); // Chỉnh sửa tốc độ tăng vừa phải
                     if (gameSpeed < 50) gameSpeed = 50; 
                 }
