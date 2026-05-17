@@ -25,6 +25,14 @@ const int EASY_GAME_SPEED = 1000;
 const int NORMAL_GAME_SPEED = 400;
 const int HARD_GAME_SPEED = 200;
 
+const int EASY_MIN_SPEED = 120;
+const int NORMAL_MIN_SPEED = 70;
+const int HARD_MIN_SPEED = 50;
+
+const int EASY_SPEED_STEP = 5;
+const int NORMAL_SPEED_STEP = 3;
+const int HARD_SPEED_STEP = 2;
+
 int gameSpeed = NORMAL_GAME_SPEED; 
 char board[H][W] = {};
 
@@ -103,6 +111,62 @@ void applyGameMode() {
     }
 }
 
+
+int getMinimumSpeed() {
+    switch (currentMode) {
+        case EASY_MODE: return EASY_MIN_SPEED;
+        case NORMAL_MODE: return NORMAL_MIN_SPEED;
+        case HARD_MODE: return HARD_MIN_SPEED;
+        default: return NORMAL_MIN_SPEED;
+    }
+}
+
+int getSpeedStepPerClearedLine() {
+    switch (currentMode) {
+        case EASY_MODE: return EASY_SPEED_STEP;
+        case NORMAL_MODE: return NORMAL_SPEED_STEP;
+        case HARD_MODE: return HARD_SPEED_STEP;
+        default: return NORMAL_SPEED_STEP;
+    }
+}
+
+void updateGameSpeedAfterClear(int clearedLines) {
+    if (clearedLines <= 0) return;
+
+    gameSpeed -= clearedLines * getSpeedStepPerClearedLine();
+
+    int minimumSpeed = getMinimumSpeed();
+    if (gameSpeed < minimumSpeed) {
+        gameSpeed = minimumSpeed;
+    }
+}
+
+void drawGameInfo() {
+    gotoxy(W * 2 + 5, 1);
+    cout << "Mode : " << getModeName() << "        ";
+
+    gotoxy(W * 2 + 5, 2);
+    cout << "Speed: " << gameSpeed << " ms       ";
+
+    gotoxy(W * 2 + 5, 4);
+    cout << "Controls:";
+
+    gotoxy(W * 2 + 5, 5);
+    cout << "A/D or <-/->: Move";
+
+    gotoxy(W * 2 + 5, 6);
+    cout << "W or ^      : Rotate";
+
+    gotoxy(W * 2 + 5, 7);
+    cout << "S/X or v    : Soft Drop";
+
+    gotoxy(W * 2 + 5, 8);
+    cout << "Space       : Hard Drop";
+
+    gotoxy(W * 2 + 5, 9);
+    cout << "P: Pause | Q: Quit";
+}
+
 void showModeMenu() {
     system("cls");
     cout << "==============================\n";
@@ -154,6 +218,7 @@ void draw() {
         }
         cout << endl;
     }
+    drawGameInfo();
 }
 
 // Logic mới cho tính năng ăn điểm
@@ -324,10 +389,7 @@ int main()
                 currentPiece->block2Board(board);
                 
                 int clearedLines = removeLine(); 
-                if (clearedLines > 0) {
-                    gameSpeed -= (clearedLines * 2); // Chỉnh sửa tốc độ tăng vừa phải
-                    if (gameSpeed < 50) gameSpeed = 50; 
-                }
+                updateGameSpeedAfterClear(clearedLines);
                 
                 spawnNewBlock();
 
