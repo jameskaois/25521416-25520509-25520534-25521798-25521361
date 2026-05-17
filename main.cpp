@@ -13,16 +13,23 @@ using namespace std;
 #define H 20
 #define W 20
 
-int gameSpeed = 400; 
+enum GameMode {
+    EASY_MODE = 1,
+    NORMAL_MODE = 2,
+    HARD_MODE = 3
+};
+
+GameMode currentMode = NORMAL_MODE;
+
+const int EASY_GAME_SPEED = 1000;
+const int NORMAL_GAME_SPEED = 400;
+const int HARD_GAME_SPEED = 200;
+
+int gameSpeed = NORMAL_GAME_SPEED; 
 char board[H][W] = {};
 
 Piece* currentPiece = nullptr;
 
-
-// ================== SOUND EFFECTS - PHẦN ĐƯỢC GIAO ==================
-// Dùng âm thanh hệ thống của Windows để không cần thêm file .wav ngoài.
-// Nếu nhóm có file âm thanh riêng, có thể đổi SND_ALIAS thành SND_FILENAME
-// và thay tên dưới đây bằng đường dẫn file, ví dụ: TEXT("sounds\\rotate.wav").
 const DWORD SOUND_FLAGS = SND_ALIAS | SND_ASYNC | SND_NODEFAULT;
 
 void playRotateSound() {
@@ -68,6 +75,65 @@ void gotoxy(int x, int y) {
     COORD c = {(SHORT)x, (SHORT)y};
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), c);
 }
+
+const char* getModeName() {
+    switch (currentMode) {
+        case EASY_MODE: return "Easy";
+        case NORMAL_MODE: return "Normal";
+        case HARD_MODE: return "Hard";
+        default: return "Normal";
+    }
+}
+
+void applyGameMode() {
+    switch (currentMode) {
+        case EASY_MODE:
+            gameSpeed = EASY_GAME_SPEED;
+            break;
+        case NORMAL_MODE:
+            gameSpeed = NORMAL_GAME_SPEED;
+            break;
+        case HARD_MODE:
+            gameSpeed = HARD_GAME_SPEED;
+            break;
+        default:
+            currentMode = NORMAL_MODE;
+            gameSpeed = NORMAL_GAME_SPEED;
+            break;
+    }
+}
+
+void showModeMenu() {
+    system("cls");
+    cout << "==============================\n";
+    cout << "          TETRIS GAME         \n";
+    cout << "==============================\n";
+    cout << "1. Easy Mode   - Toc do cham\n";
+    cout << "2. Normal Mode - Toc do mac dinh\n";
+    cout << "3. Hard Mode   - Toc do nhanh\n";
+    cout << "==============================\n";
+    cout << "Chon che do choi (1-3): ";
+
+    while (true) {
+        char choice = _getch();
+        if (choice == '1') {
+            currentMode = EASY_MODE;
+            break;
+        }
+        if (choice == '2') {
+            currentMode = NORMAL_MODE;
+            break;
+        }
+        if (choice == '3') {
+            currentMode = HARD_MODE;
+            break;
+        }
+    }
+
+    applyGameMode();
+    system("cls");
+}
+
 
 void initBoard() {
     for (int i = 0 ; i < H ; i++)
@@ -192,6 +258,7 @@ int main()
 
     srand(time(0));
     
+    showModeMenu();
     initBoard();
     spawnNewBlock();
     
