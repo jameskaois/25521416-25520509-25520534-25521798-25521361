@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <conio.h>
 #include <windows.h>
 #include <time.h>
@@ -13,7 +14,13 @@ using namespace std;
 int gameSpeed = 400; 
 char board[H][W] = {};
 
+// Biến điểm.
+int score = 0;
+int highScore = 0;
+
 Piece* currentPiece = nullptr;
+
+Piece* nextPiece = nullptr;
 
 void gotoxy(int x, int y) {
     COORD c = {(SHORT)x, (SHORT)y};
@@ -111,23 +118,101 @@ int removeLine() {
     return fullLines.size(); 
 }
 
-void spawnNewBlock() {
-    if (currentPiece != nullptr) {
-        delete currentPiece;
-    }
-    
+Piece* createRandomPiece() 
+{
     int b = rand() % 7;
-    switch(b) {
-        case 0: currentPiece = new PieceI(); break;
-        case 1: currentPiece = new PieceO(); break;
-        case 2: currentPiece = new PieceT(); break;
-        case 3: currentPiece = new PieceS(); break;
-        case 4: currentPiece = new PieceZ(); break;
-        case 5: currentPiece = new PieceJ(); break;
-        case 6: currentPiece = new PieceL(); break;
+
+    switch(b) 
+    {
+        case 0: return new PieceI();
+        case 1: return new PieceO();
+        case 2: return new PieceT();
+        case 3: return new PieceS();
+        case 4: return new PieceZ();
+        case 5: return new PieceJ();
+        case 6: return new PieceL();
     }
-    
+    return nullptr; 
+}
+
+// Spawn ra block mới và hiển thị block tiếp theo.
+void spawnNewBlock() 
+{
+    Piece* oldPiece = currentPiece;
+
+    currentPiece = nextPiece;
+    nextPiece = createRandomPiece();
+
     currentPiece->initShape();
+    nextPiece->initShape();
+
+    if (oldPiece != nullptr)
+        delete oldPiece;
+}
+
+// Hiển thị block tiếp theo ở góc phải.
+void drawNextBlock() 
+{
+    gotoxy(W * 2 + 5, 2);
+    cout << "Khối tiếp theo:";
+
+    char preview[4][4];
+    nextPiece->getShape(preview);
+
+    for (int i = 0; i < 4; i++) 
+    {
+        gotoxy(W * 2 + 5, 4 + i);
+        for (int j = 0; j < 4; j++) 
+        {
+            if (preview[i][j] != ' ')
+                cout << "██";
+            else
+                cout << "  ";
+        }
+    }
+}
+
+// Hàm load điểm cao nhất từ file txt.
+void loadHighScore() 
+{
+    ifstream file("highscore.txt");
+    if (file.is_open()) 
+    {
+        file >> highScore;
+        file.close();
+    }
+}
+
+// Lưu điểm cao nhất vào file.
+void saveHighScore() 
+{
+    ofstream file("highscore.txt");
+    if (file.is_open()) 
+    {
+        file << highScore;
+        file.close();
+    }
+}
+
+// Vẽ khung điểm.
+void drawInfoBox() 
+{
+    int startX = W * 2 + 3;
+    int startY = 9;
+    int boxWidth = 18;
+    int boxHeight = 8;
+
+    for (int i = 0; i < boxHeight; i++) 
+    {
+        gotoxy(startX, startY + i);
+        for (int j = 0; j < boxWidth; j++) 
+        {
+            if (i == 0 || i == boxHeight - 1 || j == 0 || j == boxWidth - 1)
+                cout << "#";
+            else
+                cout << " ";
+        }
+    }
 }
 
 int main()
@@ -139,9 +224,16 @@ int main()
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
 
     srand(time(0));
-    
+
+    loadHighScore();
+
     initBoard();
-    spawnNewBlock();
+
+    currentPiece = createRandomPiece();
+    currentPiece->initShape();
+
+    nextPiece = createRandomPiece();
+    nextPiece->initShape();
     
     system("cls");
     int timer = 0;
@@ -177,8 +269,8 @@ int main()
 
                 // Pause Game
                 if (c == 'p' || c == 'P') {
-                    gotoxy(W * 2 + 5, H / 2);
-                    cout << "TT: Tạm dừng   "; 
+                    gotoxy(W * 2 + 6, 15);
+                    cout << "Tạm dừng     "; 
                     while (true) {
                         if (_kbhit()) {
                             char resumeKey = _getch();
@@ -187,7 +279,7 @@ int main()
                         }
                         Sleep(100); 
                     }
-                    gotoxy(W * 2 + 5, H / 2);
+                    gotoxy(W * 2 + 6, 15);
                     cout << "               "; 
                 }
 
@@ -203,7 +295,10 @@ int main()
             } else {
                 currentPiece->block2Board(board);
                 
-                int clearedLines = removeLine(); 
+                int clearedLines = removeLine();
+                // Cộng điểm sau khi xóa line.
+                score += clearedLines * 100;
+
                 if (clearedLines > 0) {
                     gameSpeed -= (clearedLines * 2); // Chỉnh sửa tốc độ tăng vừa phải
                     if (gameSpeed < 50) gameSpeed = 50; 
@@ -214,8 +309,13 @@ int main()
                 if (!currentPiece->canMove(0, 0, board)) {
                     currentPiece->block2Board(board); 
                     draw();        
-                    gotoxy(W * 2 + 5, H / 2);
+                    gotoxy(W * 2 + 6, 16);
                     cout << "GAME OVER!";
+                    if (score > highScore) 
+                    {
+                        highScore = score;
+                        saveHighScore();
+                    }
                     Sleep(2000);
                     break;
                 }
@@ -225,8 +325,21 @@ int main()
         
         currentPiece->block2Board(board);
         draw();
+        drawNextBlock();
+        drawInfoBox();
+
+        gotoxy(W * 2 + 6, 11);
+        cout << "Điểm: " << score << "   ";
+
+        gotoxy(W * 2 + 6, 13);
+        cout << "Kỷ lục: " << highScore << "   ";
+
         Sleep(10); 
     }
-    gotoxy(0, H + 2); 
+    gotoxy(0, H + 2);
+
+    delete currentPiece;
+    delete nextPiece;
+
     return 0;
 }
