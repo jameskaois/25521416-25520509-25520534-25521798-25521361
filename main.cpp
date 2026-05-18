@@ -5,6 +5,7 @@
 #include <mmsystem.h>
 #include <time.h>
 #include <vector>
+#include <string>
 #include "Piece.h"
 
 #pragma comment(lib, "winmm.lib")
@@ -45,9 +46,8 @@ int score = 0;
 int highScore = 0;
 
 Piece* currentPiece = nullptr;
-
 Piece* nextPiece = nullptr;
-const DWORD SOUND_FLAGS = SND_ALIAS | SND_ASYNC | SND_NODEFAULT;
+
 const DWORD SOUND_FLAGS = SND_FILENAME | SND_ASYNC | SND_NODEFAULT;
 
 void playRotateSound() {
@@ -87,6 +87,7 @@ void rotateCurrentPieceWithSound() {
 
     if (rotated) playRotateSound();
 }
+
 // =====================================================================
 
 void gotoxy(int x, int y) {
@@ -120,7 +121,6 @@ void applyGameMode() {
             break;
     }
 }
-
 
 int getMinimumSpeed() {
     switch (currentMode) {
@@ -189,7 +189,6 @@ void drawGameInfo() {
     gotoxy(infoX + 2, infoY + 12); cout << "S/X | v     : Soft Drop";
     gotoxy(infoX + 2, infoY + 13); cout << "Space       : Hard Drop";
     gotoxy(infoX + 2, infoY + 14); cout << "P: Pause | Q: Quit";
-    
 }
 
 int drawMenu(const vector<string>& options, const string& title) {
@@ -214,8 +213,8 @@ int drawMenu(const vector<string>& options, const string& title) {
         char c = _getch();
         if (c == -32 || c == 224) {
             c = _getch();
-            if (c == 72) selected = (selected - 1 + options.size()) % options.size(); // Lên
-            if (c == 80) selected = (selected + 1) % options.size(); // Xuống
+            if (c == 72) selected = (selected - 1 + options.size()) % options.size(); 
+            if (c == 80) selected = (selected + 1) % options.size(); 
         } else if (c == 'w' || c == 'W') {
             selected = (selected - 1 + options.size()) % options.size();
         } else if (c == 's' || c == 'S') {
@@ -249,7 +248,6 @@ void showMainMenu() {
     system("cls");
 }
 
-
 void initBoard() {
     for (int i = 0 ; i < H ; i++)
         for (int j = 0 ; j < W ; j++)
@@ -271,14 +269,12 @@ void addHardModeGarbageLine() {
         hole[randomHole] = true;
     }
 
-    // Đẩy toàn bộ gạch hiện có lên 1 hàng, chỉ dịch phần bên trong tường.
     for (int i = 1; i < H - 2; i++) {
         for (int j = 1; j < W - 1; j++) {
             board[i][j] = board[i + 1][j];
         }
     }
 
-    // Tạo hàng gạch rác ở đáy, có lỗ để người chơi vẫn có thể xử lý.
     for (int j = 1; j < W - 1; j++) {
         board[H - 2][j] = hole[j] ? ' ' : 'G';
     }
@@ -293,25 +289,25 @@ void maybeAddHardModeGarbageLine() {
     }
 }
 
-
+// Hàm draw() đã thêm String Buffering chống lag
 void draw() {
     gotoxy(0,0);
+    string frame = "";
     for (int i = 0; i < H; i++){
         for (int j = 0; j < W; j++){
-            if (board[i][j] == '#') cout << "##";     
-            else if (board[i][j] == ' ') cout << "  ";      
-            else cout << "██";
+            if (board[i][j] == '#') frame += "##";     
+            else if (board[i][j] == ' ') frame += "  ";      
+            else frame += "██";
         }
-        cout << endl;
+        frame += "\n";
     }
+    cout << frame;
     drawGameInfo();
 }
 
-// Logic mới cho tính năng ăn điểm
 int removeLine() {
     vector<int> fullLines;
     
-    // Bước 1: Tìm tất cả các hàng đã được lấp đầy
     for (int i = H - 2; i >= 1; i--) {
         bool full = true; 
         for (int j = 1; j < W - 1; j++) {
@@ -325,22 +321,17 @@ int removeLine() {
         }
     }
 
-    // Nếu không có hàng nào đầy thì thoát luôn
     if (fullLines.empty()) return 0; 
 
-    // Phát nhạc ngắn ngay trong removeLine() khi xử lý ăn hàng thành công
     playClearLineSound();
 
-    // Bước 2: Hiệu ứng nhấp nháy 3 lần cho các hàng ăn điểm
     for (int blink = 0; blink < 3; blink++) {
-        // Tắt gạch (thành khoảng trắng)
         for (int i : fullLines) {
             for (int j = 1; j < W - 1; j++) board[i][j] = ' ';
         }
         draw();
         Sleep(10);
 
-        // Bật gạch (dùng ký tự 'O' để hàm draw() in ra ██)
         for (int i : fullLines) {
             for (int j = 1; j < W - 1; j++) board[i][j] = 'O'; 
         }
@@ -348,7 +339,6 @@ int removeLine() {
         Sleep(10);
     }
 
-    // Bước 3: Dọn dẹp hàng và kéo phần gạch phía trên rớt xuống
     int writeRow = H - 2;
     for (int readRow = H - 2; readRow >= 1; readRow--) {
         bool isFull = false;
@@ -359,7 +349,6 @@ int removeLine() {
             }
         }
 
-        // Nếu hàng đang đọc không phải hàng bị xóa, thì chép nó xuống dưới
         if (!isFull) {
             for (int j = 1; j < W - 1; j++) {
                 board[writeRow][j] = board[readRow][j];
@@ -368,7 +357,6 @@ int removeLine() {
         }
     }
 
-    // Làm trống các hàng trên cùng còn dư lại
     while (writeRow >= 1) {
         for (int j = 1; j < W - 1; j++) {
             board[writeRow][j] = ' ';
@@ -380,19 +368,10 @@ int removeLine() {
     return fullLines.size(); 
 }
 
+// Đã tách rời hàm tạo khối ngẫu nhiên
 Piece* createRandomPiece() 
 {
-void spawnNewBlock(bool allowGarbage = true) {
-    if (allowGarbage) {
-        maybeAddHardModeGarbageLine();
-    }
-
-    if (currentPiece != nullptr) {
-        delete currentPiece;
-    }
-    
     int b = rand() % 7;
-
     switch(b) 
     {
         case 0: return new PieceI();
@@ -406,22 +385,23 @@ void spawnNewBlock(bool allowGarbage = true) {
     return nullptr; 
 }
 
-// Spawn ra block mới và hiển thị block tiếp theo.
-void spawnNewBlock() 
+void spawnNewBlock(bool allowGarbage = true) 
 {
-    Piece* oldPiece = currentPiece;
+    if (allowGarbage) {
+        maybeAddHardModeGarbageLine();
+    }
 
+    Piece* oldPiece = currentPiece;
     currentPiece = nextPiece;
     nextPiece = createRandomPiece();
 
-    currentPiece->initShape();
-    nextPiece->initShape();
+    if (currentPiece != nullptr) currentPiece->initShape();
+    if (nextPiece != nullptr) nextPiece->initShape();
 
     if (oldPiece != nullptr)
         delete oldPiece;
 }
 
-// Hiển thị block tiếp theo ở góc phải.
 void drawNextBlock() 
 {
     gotoxy(W * 2 + 5, 2);
@@ -443,7 +423,6 @@ void drawNextBlock()
     }
 }
 
-// Hàm load điểm cao nhất từ file txt.
 void loadHighScore() 
 {
     ifstream file("highscore.txt");
@@ -454,7 +433,6 @@ void loadHighScore()
     }
 }
 
-// Lưu điểm cao nhất vào file.
 void saveHighScore() 
 {
     ofstream file("highscore.txt");
@@ -465,7 +443,6 @@ void saveHighScore()
     }
 }
 
-// Vẽ khung điểm.
 void drawInfoBox() 
 {
     int startX = W * 2 + 3;
@@ -500,15 +477,17 @@ int main()
 
     initBoard();
 
+    // Khởi tạo 2 khối gạch đầu tiên
     currentPiece = createRandomPiece();
     currentPiece->initShape();
-
     nextPiece = createRandomPiece();
     nextPiece->initShape();
     
     showMainMenu();
     initBoard();
-    spawnNewBlock(false);
+    
+    // Spawn block đầu sau khi vô menu (false = không đổ rác)
+    spawnNewBlock(false); 
     
     system("cls");
     int timer = 0;
@@ -519,22 +498,19 @@ int main()
         while (_kbhit()){
             char c = _getch();
             
-            // Xử lý phím mũi tên
             if (c == -32 || c == 224) {
                 c = _getch();
                 if (c == 75 && currentPiece->canMove(-1, 0, board)) currentPiece->moveLeft();  
                 if (c == 77 && currentPiece->canMove(1, 0, board)) currentPiece->moveRight(); 
                 if (c == 72) rotateCurrentPieceWithSound();                                     
-                if (c == 80 && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();  // Soft Drop
+                if (c == 80 && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();  
             } else {
                 if ((c=='a' || c=='A') && currentPiece->canMove(-1, 0, board)) currentPiece->moveLeft();
                 if ((c=='d' || c=='D') && currentPiece->canMove(1, 0, board)) currentPiece->moveRight();
                 if (c=='w' || c=='W') rotateCurrentPieceWithSound();           
                 
-                // Soft Drop
                 if ((c=='s' || c=='S' || c=='x' || c=='X') && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();    
                 
-                // Hard Drop
                 if (c == ' ') {
                     while (currentPiece->canMove(0, 1, board)) {
                         currentPiece->moveDown();
@@ -542,7 +518,6 @@ int main()
                     timer = gameSpeed; 
                 }
 
-                // Pause Game
                 if (c == 'p' || c == 'P') {
                     gotoxy(W * 2 + 6, 15);
                     cout << "Tạm dừng     "; 
@@ -572,14 +547,7 @@ int main()
                 currentPiece->block2Board(board);
                 
                 int clearedLines = removeLine();
-                // Cộng điểm sau khi xóa line.
                 score += clearedLines * 100;
-
-                if (clearedLines > 0) {
-                    gameSpeed -= (clearedLines * 2); // Chỉnh sửa tốc độ tăng vừa phải
-                    if (gameSpeed < 50) gameSpeed = 50; 
-                }
-                int clearedLines = removeLine(); 
                 updateGameSpeedAfterClear(clearedLines);
                 
                 spawnNewBlock();

@@ -1,5 +1,5 @@
-#include "Piece.h"
 #include <windows.h>
+#include "Piece.h"
 
 Piece::Piece()
 {
@@ -92,7 +92,7 @@ bool Piece::canMove(int dx, int dy, char board[H][W])
     return true;
 }
 
-void Piece::block2Board(char board[H][W],int boardColor[H][W])
+void Piece::block2Board(char board[H][W])
 {
     for (int i = 0; i < 4; i++)
     {
@@ -101,13 +101,12 @@ void Piece::block2Board(char board[H][W],int boardColor[H][W])
             if (shape[i][j] != ' ' && y + i < H)
             {
                 board[y + i][x + j] = shape[i][j];
-                boardColor[y + i][x + j] = color;
             }
         }
     }
 }
 
-void Piece::boardDelBlock(char board[H][W],int boardColor[H][W])
+void Piece::boardDelBlock(char board[H][W])
 {
     for (int i = 0; i < 4; i++)
     {
@@ -116,7 +115,6 @@ void Piece::boardDelBlock(char board[H][W],int boardColor[H][W])
             if (shape[i][j] != ' ' && y + i >= 0 && y + i < H)
             {
                 board[y + i][x + j] = ' ';
-                boardColor[y + i][x + j] = 0; // reset màu
             }
         }
     }
@@ -136,7 +134,6 @@ char Piece::getCell(int i, int j)
 {
     return shape[i][j];
 }
-
 
 void setColor(int color) {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
