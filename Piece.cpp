@@ -15,6 +15,8 @@ Piece::Piece()
     }
 }
 
+
+
 void Piece::moveLeft()
 {
     x--;
