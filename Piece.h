@@ -12,8 +12,7 @@ protected:
     char shape[4][4];
 
 public:
-    Piece();
-    virtual ~Piece() {}
+        Piece();
 
     virtual void initShape() = 0;
 
@@ -31,6 +30,7 @@ public:
 
     int getX();
     int getY();
+                                
 
     char getCell(int i, int j);
     void getShape(char dest[4][4]) 

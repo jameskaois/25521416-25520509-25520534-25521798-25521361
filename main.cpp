@@ -351,6 +351,30 @@ void maybeAddHardModeGarbageLine() {
     }
 }
 
+Piece* createGhost(Piece* current)
+{
+    Piece* ghost = nullptr;
+
+    if (dynamic_cast<PieceO*>(current)) ghost = new PieceO();
+    else if (dynamic_cast<PieceI*>(current)) ghost = new PieceI();
+    else if (dynamic_cast<PieceT*>(current)) ghost = new PieceT();
+    else if (dynamic_cast<PieceL*>(current)) ghost = new PieceL();
+    else if (dynamic_cast<PieceJ*>(current)) ghost = new PieceJ();
+    else if (dynamic_cast<PieceS*>(current)) ghost = new PieceS();
+    else if (dynamic_cast<PieceZ*>(current)) ghost = new PieceZ();
+
+    if (!ghost) return nullptr;
+
+    ghost->initShape();
+
+    // copy vị trí
+    while (ghost->getX() < current->getX()) ghost->moveRight();
+    while (ghost->getX() > current->getX()) ghost->moveLeft();
+    while (ghost->getY() < current->getY()) ghost->moveDown();
+
+    return ghost;
+}
+
 void draw() {
     gotoxy(0,0);
     string frame = "";
@@ -370,6 +394,40 @@ void draw() {
         frame += "\n";
     }
     cout << frame;
+
+    // ✅ DRAW GHOST
+if (currentMode != HARD_MODE && currentPiece != nullptr)
+{
+    Piece* ghost = createGhost(currentPiece);
+
+    if (ghost != nullptr)
+    {
+        while (ghost->canMove(0, 1, board))
+        {
+            ghost->moveDown();
+        }
+
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (ghost->getCell(i, j) != ' ') {
+                    int gx = ghost->getX() + j;
+                    int gy = ghost->getY() + i;
+
+                    if (board[gy][gx] == ' ') {
+                        gotoxy(gx * 2, gy);
+                        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 8); // xám
+                        cout << "[]";
+                        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
+                    }
+                }
+            }
+        }
+
+        delete ghost;
+    }
+}
+
+
     drawGameInfo();
 }
 
@@ -465,6 +523,7 @@ void spawnNewBlock(bool allowGarbage = true) {
 
     if (oldPiece != nullptr) delete oldPiece;
 }
+
 
 int main() {
     SetConsoleOutputCP(CP_UTF8);
