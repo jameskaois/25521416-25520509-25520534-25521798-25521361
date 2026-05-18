@@ -33,6 +33,12 @@ public:
     int getY();
 
     char getCell(int i, int j);
+    void getShape(char dest[4][4]) 
+    {
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            dest[i][j] = shape[i][j];
+    }
 };
 
 class PieceO : public Piece {

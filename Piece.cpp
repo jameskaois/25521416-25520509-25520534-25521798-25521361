@@ -133,3 +133,8 @@ char Piece::getCell(int i, int j)
 {
     return shape[i][j];
 }
+
+
+void setColor(int color) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+}
