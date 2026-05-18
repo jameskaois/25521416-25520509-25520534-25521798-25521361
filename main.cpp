@@ -41,18 +41,18 @@ char board[H][W] = {};
 
 Piece* currentPiece = nullptr;
 
-const DWORD SOUND_FLAGS = SND_ALIAS | SND_ASYNC | SND_NODEFAULT;
+const DWORD SOUND_FLAGS = SND_FILENAME | SND_ASYNC | SND_NODEFAULT;
 
 void playRotateSound() {
-    PlaySound(TEXT("SystemAsterisk"), NULL, SOUND_FLAGS);
+    PlaySound(TEXT("sounds\\rotate.wav"), NULL, SOUND_FLAGS);
 }
 
 void playLandSound() {
-    PlaySound(TEXT("SystemHand"), NULL, SOUND_FLAGS);
+    PlaySound(TEXT("sounds\\land.wav"), NULL, SOUND_FLAGS);
 }
 
 void playClearLineSound() {
-    PlaySound(TEXT("SystemExclamation"), NULL, SOUND_FLAGS);
+    PlaySound(TEXT("sounds\\clear_line.wav"), NULL, SOUND_FLAGS);
 }
 
 void rotateCurrentPieceWithSound() {
