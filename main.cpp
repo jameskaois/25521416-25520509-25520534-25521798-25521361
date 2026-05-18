@@ -1,5 +1,4 @@
 #include <iostream>
-#include <fstream>
 #include <conio.h>
 #include <windows.h>
 #include <mmsystem.h>
@@ -39,15 +38,10 @@ const int HARD_GARBAGE_HOLES = 2;
 
 int gameSpeed = NORMAL_GAME_SPEED; 
 char board[H][W] = {};
-
-// Biến điểm.
-int score = 0;
-int highScore = 0;
+int boardColor[H][W] = {}; // ✅ THÊM DÒNG NÀY
 
 Piece* currentPiece = nullptr;
 
-Piece* nextPiece = nullptr;
-const DWORD SOUND_FLAGS = SND_ALIAS | SND_ASYNC | SND_NODEFAULT;
 const DWORD SOUND_FLAGS = SND_FILENAME | SND_ASYNC | SND_NODEFAULT;
 
 void playRotateSound() {
@@ -151,101 +145,67 @@ void updateGameSpeedAfterClear(int clearedLines) {
     }
 }
 
-void drawFrame(int x, int y, int width, int height, string title) {
-    gotoxy(x, y); cout << "╭";
-    for (int i = 0; i < width - 2; i++) cout << "─";
-    cout << "╮";
-    
-    if (!title.empty()) {
-        gotoxy(x + 2, y); cout << " " << title << " ";
-    }
-
-    for (int i = 1; i < height - 1; i++) {
-        gotoxy(x, y + i); cout << "│";
-        gotoxy(x + width - 1, y + i); cout << "│";
-    }
-
-    gotoxy(x, y + height - 1); cout << "╰";
-    for (int i = 0; i < width - 2; i++) cout << "─";
-    cout << "╯";
-}
-
 void drawGameInfo() {
-    int infoX = W * 2 + 4;
-    int infoY = 0;         
-    
-    drawFrame(infoX, infoY, 36, 7, "GAME STATUS");
-    gotoxy(infoX + 2, infoY + 2); cout << "Mode : " << getModeName() << "        ";
-    gotoxy(infoX + 2, infoY + 3); cout << "Speed: " << gameSpeed << " ms       ";
+    gotoxy(W * 2 + 5, 1);
+    cout << "Mode : " << getModeName() << "        ";
+
+    gotoxy(W * 2 + 5, 2);
+    cout << "Speed: " << gameSpeed << " ms       ";
+
+    gotoxy(W * 2 + 5, 4);
+    cout << "Controls:";
+
+    gotoxy(W * 2 + 5, 5);
+    cout << "A/D or <-/->: Move";
+
+    gotoxy(W * 2 + 5, 6);
+    cout << "W or ^      : Rotate";
+
+    gotoxy(W * 2 + 5, 7);
+    cout << "S/X or v    : Soft Drop";
+
+    gotoxy(W * 2 + 5, 8);
+    cout << "Space       : Hard Drop";
+
+    gotoxy(W * 2 + 5, 9);
+    cout << "P: Pause | Q: Quit";
+
+    gotoxy(W * 2 + 5, 11);
     if (currentMode == HARD_MODE) {
-        gotoxy(infoX + 2, infoY + 4); cout << "Hard : " << HARD_GARBAGE_CHANCE << "% garbage";
+        cout << "Hard: " << HARD_GARBAGE_CHANCE << "% garbage/spawn";
     } else {
-        gotoxy(infoX + 2, infoY + 4); cout << "                         ";
-    }
-
-    drawFrame(infoX, infoY + 8, 36, 9, "CONTROLS");
-    gotoxy(infoX + 2, infoY + 10); cout << "A/D | <-/-> : Move";
-    gotoxy(infoX + 2, infoY + 11); cout << "W   | ^     : Rotate";
-    gotoxy(infoX + 2, infoY + 12); cout << "S/X | v     : Soft Drop";
-    gotoxy(infoX + 2, infoY + 13); cout << "Space       : Hard Drop";
-    gotoxy(infoX + 2, infoY + 14); cout << "P: Pause | Q: Quit";
-    
-}
-
-int drawMenu(const vector<string>& options, const string& title) {
-    int selected = 0;
-    while (true) {
-        system("cls");
-        cout << "\n=========================================\n";
-        cout << "          " << title << "\n";
-        cout << "=========================================\n\n";
-        
-        for (int i = 0; i < options.size(); i++) {
-            if (i == selected) {
-                cout << "      >> " << options[i] << " <<\n";
-            } else {
-                cout << "         " << options[i] << "\n";
-            }
-        }
-        
-        cout << "\n=========================================\n";
-        cout << " Dung mui ten ^/v hoac W/S de di chuyen.\n Enter de chon.";
-        
-        char c = _getch();
-        if (c == -32 || c == 224) {
-            c = _getch();
-            if (c == 72) selected = (selected - 1 + options.size()) % options.size(); // Lên
-            if (c == 80) selected = (selected + 1) % options.size(); // Xuống
-        } else if (c == 'w' || c == 'W') {
-            selected = (selected - 1 + options.size()) % options.size();
-        } else if (c == 's' || c == 'S') {
-            selected = (selected + 1) % options.size();
-        } else if (c == 13) {
-            return selected;
-        }
+        cout << "                         ";
     }
 }
 
-void showMainMenu() {
+void showModeMenu() {
+    system("cls");
+    cout << "==============================\n";
+    cout << "          TETRIS GAME         \n";
+    cout << "==============================\n";
+    cout << "1. Easy Mode   - Toc do cham\n";
+    cout << "2. Normal Mode - Toc do mac dinh\n";
+    cout << "3. Hard Mode   - Toc do nhanh + co the xuat hien gach rac\n";
+    cout << "==============================\n";
+    cout << "Chon che do choi (1-3): ";
+
     while (true) {
-        vector<string> mainOpts = {"Choi ngay", "Chon do kho", "Thoat"};
-        int choice = drawMenu(mainOpts, "TETRIS GAME");
-        
-        if (choice == 0) {
+        char choice = _getch();
+        if (choice == '1') {
+            currentMode = EASY_MODE;
             break;
-        } else if (choice == 1) {
-            vector<string> modeOpts = {"Easy (Cham)", "Normal (Mac dinh)", "Hard (Nhanh + Co rac)", "Quay lai"};
-            int modeChoice = drawMenu(modeOpts, "CHON DO KHO");
-            
-            if (modeChoice == 0) currentMode = EASY_MODE;
-            else if (modeChoice == 1) currentMode = NORMAL_MODE;
-            else if (modeChoice == 2) currentMode = HARD_MODE;
-            
-            applyGameMode();
-        } else if (choice == 2) {
-            exit(0);
+        }
+        if (choice == '2') {
+            currentMode = NORMAL_MODE;
+            break;
+        }
+        if (choice == '3') {
+            currentMode = HARD_MODE;
+            break;
         }
     }
+
+    applyGameMode();
     system("cls");
 }
 
@@ -275,12 +235,14 @@ void addHardModeGarbageLine() {
     for (int i = 1; i < H - 2; i++) {
         for (int j = 1; j < W - 1; j++) {
             board[i][j] = board[i + 1][j];
+            boardColor[i][j] = boardColor[i + 1][j];
         }
     }
 
     // Tạo hàng gạch rác ở đáy, có lỗ để người chơi vẫn có thể xử lý.
     for (int j = 1; j < W - 1; j++) {
         board[H - 2][j] = hole[j] ? ' ' : 'G';
+        boardColor[H - 2][j] = hole[j] ? 0 : 8; // reset màu hoặc đặt màu cho gạch rác
     }
 }
 
@@ -293,19 +255,93 @@ void maybeAddHardModeGarbageLine() {
     }
 }
 
+Piece* getGhostPiece(Piece* current, char board[H][W])
+{
+    Piece* ghost = nullptr;
+
+    // copy đúng loại
+    if (dynamic_cast<PieceI*>(current)) ghost = new PieceI();
+    else if (dynamic_cast<PieceO*>(current)) ghost = new PieceO();
+    else if (dynamic_cast<PieceT*>(current)) ghost = new PieceT();
+    else if (dynamic_cast<PieceS*>(current)) ghost = new PieceS();
+    else if (dynamic_cast<PieceZ*>(current)) ghost = new PieceZ();
+    else if (dynamic_cast<PieceJ*>(current)) ghost = new PieceJ();
+    else if (dynamic_cast<PieceL*>(current)) ghost = new PieceL();
+
+    ghost->initShape();
+
+    // copy position
+    ghost->moveDown(); // trick nhỏ để copy y
+
+    // set lại đúng vị trí
+    *((int*)ghost) = *((int*)current);
+
+    // cho rơi xuống
+    while (ghost->canMove(0, 1, board))
+    {
+        ghost->moveDown();
+    }
+
+    return ghost;
+
+}
 
 void draw() {
     gotoxy(0,0);
-    for (int i = 0; i < H; i++){
-        for (int j = 0; j < W; j++){
-            if (board[i][j] == '#') cout << "##";     
-            else if (board[i][j] == ' ') cout << "  ";      
-            else cout << "██";
+
+    // ✅ 1. Vẽ board trước
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (board[i][j] == '#') {
+                setColor(7);
+                cout << "##";
+            }
+            else if (board[i][j] == ' ') {
+                cout << "  ";
+            }
+            else {
+                setColor(boardColor[i][j]);
+                cout << "██";
+                setColor(7);
+            }
         }
         cout << endl;
     }
+
+    if (currentMode != HARD_MODE && currentPiece != nullptr)
+    {
+        // tạo ghost
+        Piece* ghost = getGhostPiece(currentPiece,board);
+
+        // cho rơi xuống
+        while (ghost->canMove(0, 1, board)) {
+            ghost->moveDown();
+        }
+
+        // vẽ ghost
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (ghost->getCell(i, j) != ' ') {
+                    int gx = ghost->getX() + j;
+                    int gy = ghost->getY() + i;
+
+                    // không vẽ đè block thật
+                    if (board[gy][gx] == ' ') {
+                        gotoxy(gx * 2, gy);
+                        setColor(8); // màu xám
+                        cout << "[]";
+                        setColor(7);
+                    }
+                }
+            }
+        }
+
+        delete ghost; 
+    }
+
     drawGameInfo();
 }
+
 
 // Logic mới cho tính năng ăn điểm
 int removeLine() {
@@ -363,6 +399,7 @@ int removeLine() {
         if (!isFull) {
             for (int j = 1; j < W - 1; j++) {
                 board[writeRow][j] = board[readRow][j];
+                boardColor[writeRow][j] = boardColor[readRow][j];
             }
             writeRow--;
         }
@@ -372,6 +409,7 @@ int removeLine() {
     while (writeRow >= 1) {
         for (int j = 1; j < W - 1; j++) {
             board[writeRow][j] = ' ';
+            boardColor[writeRow][j] = 0; // reset màu
         }
         writeRow--;
     }
@@ -380,8 +418,6 @@ int removeLine() {
     return fullLines.size(); 
 }
 
-Piece* createRandomPiece() 
-{
 void spawnNewBlock(bool allowGarbage = true) {
     if (allowGarbage) {
         maybeAddHardModeGarbageLine();
@@ -392,99 +428,21 @@ void spawnNewBlock(bool allowGarbage = true) {
     }
     
     int b = rand() % 7;
-
-    switch(b) 
-    {
-        case 0: return new PieceI();
-        case 1: return new PieceO();
-        case 2: return new PieceT();
-        case 3: return new PieceS();
-        case 4: return new PieceZ();
-        case 5: return new PieceJ();
-        case 6: return new PieceL();
+    switch(b) {
+        case 0: currentPiece = new PieceI(); break;
+        case 1: currentPiece = new PieceO(); break;
+        case 2: currentPiece = new PieceT(); break;
+        case 3: currentPiece = new PieceS(); break;
+        case 4: currentPiece = new PieceZ(); break;
+        case 5: currentPiece = new PieceJ(); break;
+        case 6: currentPiece = new PieceL(); break;
     }
-    return nullptr; 
-}
-
-// Spawn ra block mới và hiển thị block tiếp theo.
-void spawnNewBlock() 
-{
-    Piece* oldPiece = currentPiece;
-
-    currentPiece = nextPiece;
-    nextPiece = createRandomPiece();
-
+    
     currentPiece->initShape();
-    nextPiece->initShape();
-
-    if (oldPiece != nullptr)
-        delete oldPiece;
 }
 
-// Hiển thị block tiếp theo ở góc phải.
-void drawNextBlock() 
-{
-    gotoxy(W * 2 + 5, 2);
-    cout << "Khối tiếp theo:";
+void setColor(int color);
 
-    char preview[4][4];
-    nextPiece->getShape(preview);
-
-    for (int i = 0; i < 4; i++) 
-    {
-        gotoxy(W * 2 + 5, 4 + i);
-        for (int j = 0; j < 4; j++) 
-        {
-            if (preview[i][j] != ' ')
-                cout << "██";
-            else
-                cout << "  ";
-        }
-    }
-}
-
-// Hàm load điểm cao nhất từ file txt.
-void loadHighScore() 
-{
-    ifstream file("highscore.txt");
-    if (file.is_open()) 
-    {
-        file >> highScore;
-        file.close();
-    }
-}
-
-// Lưu điểm cao nhất vào file.
-void saveHighScore() 
-{
-    ofstream file("highscore.txt");
-    if (file.is_open()) 
-    {
-        file << highScore;
-        file.close();
-    }
-}
-
-// Vẽ khung điểm.
-void drawInfoBox() 
-{
-    int startX = W * 2 + 3;
-    int startY = 9;
-    int boxWidth = 18;
-    int boxHeight = 8;
-
-    for (int i = 0; i < boxHeight; i++) 
-    {
-        gotoxy(startX, startY + i);
-        for (int j = 0; j < boxWidth; j++) 
-        {
-            if (i == 0 || i == boxHeight - 1 || j == 0 || j == boxWidth - 1)
-                cout << "#";
-            else
-                cout << " ";
-        }
-    }
-}
 
 int main()
 {
@@ -495,18 +453,8 @@ int main()
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
 
     srand(time(0));
-
-    loadHighScore();
-
-    initBoard();
-
-    currentPiece = createRandomPiece();
-    currentPiece->initShape();
-
-    nextPiece = createRandomPiece();
-    nextPiece->initShape();
     
-    showMainMenu();
+    showModeMenu();
     initBoard();
     spawnNewBlock(false);
     
@@ -514,8 +462,8 @@ int main()
     int timer = 0;
     
     while (1){
-        currentPiece->boardDelBlock(board);
-        
+        currentPiece->boardDelBlock(board, boardColor);
+        currentPiece->block2Board(board, boardColor);
         while (_kbhit()){
             char c = _getch();
             
@@ -544,8 +492,8 @@ int main()
 
                 // Pause Game
                 if (c == 'p' || c == 'P') {
-                    gotoxy(W * 2 + 6, 15);
-                    cout << "Tạm dừng     "; 
+                    gotoxy(W * 2 + 5, H / 2);
+                    cout << "TT: Tạm dừng   "; 
                     while (true) {
                         if (_kbhit()) {
                             char resumeKey = _getch();
@@ -554,7 +502,7 @@ int main()
                         }
                         Sleep(100); 
                     }
-                    gotoxy(W * 2 + 6, 15);
+                    gotoxy(W * 2 + 5, H / 2);
                     cout << "               "; 
                 }
 
@@ -569,31 +517,18 @@ int main()
                 currentPiece->moveDown();
             } else {
                 playLandSound();
-                currentPiece->block2Board(board);
+                currentPiece->block2Board(board, boardColor);
                 
-                int clearedLines = removeLine();
-                // Cộng điểm sau khi xóa line.
-                score += clearedLines * 100;
-
-                if (clearedLines > 0) {
-                    gameSpeed -= (clearedLines * 2); // Chỉnh sửa tốc độ tăng vừa phải
-                    if (gameSpeed < 50) gameSpeed = 50; 
-                }
                 int clearedLines = removeLine(); 
                 updateGameSpeedAfterClear(clearedLines);
                 
                 spawnNewBlock();
 
                 if (!currentPiece->canMove(0, 0, board)) {
-                    currentPiece->block2Board(board); 
+                    currentPiece->block2Board(board, boardColor); 
                     draw();        
-                    gotoxy(W * 2 + 6, 16);
+                    gotoxy(W * 2 + 5, H / 2);
                     cout << "GAME OVER!";
-                    if (score > highScore) 
-                    {
-                        highScore = score;
-                        saveHighScore();
-                    }
                     Sleep(2000);
                     break;
                 }
@@ -601,23 +536,10 @@ int main()
             timer = 0;
         }
         
-        currentPiece->block2Board(board);
+        currentPiece->block2Board(board, boardColor);
         draw();
-        drawNextBlock();
-        drawInfoBox();
-
-        gotoxy(W * 2 + 6, 11);
-        cout << "Điểm: " << score << "   ";
-
-        gotoxy(W * 2 + 6, 13);
-        cout << "Kỷ lục: " << highScore << "   ";
-
         Sleep(10); 
     }
-    gotoxy(0, H + 2);
-
-    delete currentPiece;
-    delete nextPiece;
-
+    gotoxy(0, H + 2); 
     return 0;
 }
