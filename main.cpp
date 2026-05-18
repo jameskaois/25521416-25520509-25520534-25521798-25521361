@@ -37,7 +37,6 @@ const int HARD_GARBAGE_HOLES = 2;
 int gameSpeed = NORMAL_GAME_SPEED; 
 char board[H][W] = {};
 
-// Biến điểm & hệ thống
 int score = 0;
 int bestScore = 0;
 int lines = 0;
@@ -256,23 +255,65 @@ int drawMenu(const vector<string>& options, const string& title) {
 }
 
 void showMainMenu() {
+    int selected = 0;
+    vector<string> options = {"1. Bat dau choi", "2. Cai dat che do", "3. Xem Ky Luc", "4. Thoat"};
+    
     while (true) {
-        vector<string> mainOpts = {"Choi ngay", "Chon do kho", "Thoat"};
-        int choice = drawMenu(mainOpts, "TETRIS GAME");
+        system("cls");
+        cout << "\n";
+        cout << "   _______ ______ _______ _____  _____  _____  \n";
+        cout << "  |__   __|  ____|__   __|  __ \\|_   _|/ ____| \n";
+        cout << "     | |  | |__     | |  | |__) | | | | (___   \n";
+        cout << "     | |  |  __|    | |  |  _  /  | |  \\___ \\  \n";
+        cout << "     | |  | |____   | |  | | \\ \\ _| |_ ____) | \n";
+        cout << "     |_|  |______|  |_|  |_|  \\_\\_____|_____/  \n";
+        cout << "\n===============================================\n\n";
         
-        if (choice == 0) {
-            break;
-        } else if (choice == 1) {
-            vector<string> modeOpts = {"Easy (Cham)", "Normal (Mac dinh)", "Hard (Nhanh + Co rac)", "Quay lai"};
-            int modeChoice = drawMenu(modeOpts, "CHON DO KHO");
-            
-            if (modeChoice == 0) currentMode = EASY_MODE;
-            else if (modeChoice == 1) currentMode = NORMAL_MODE;
-            else if (modeChoice == 2) currentMode = HARD_MODE;
-            
-            applyGameMode();
-        } else if (choice == 2) {
-            exit(0);
+        for (int i = 0; i < options.size(); i++) {
+            if (i == selected) {
+                cout << "             >> " << options[i] << " <<\n"; 
+            } else {
+                cout << "                " << options[i] << "\n";
+            }
+        }
+        
+        cout << "\n===============================================\n";
+        cout << "   Dung mui ten ^/v hoac W/S de chon. \n   Enter de xac nhan.\n";
+        
+        char c = _getch();
+        if (c == -32 || c == 224) {
+            c = _getch();
+            if (c == 72) selected = (selected - 1 + options.size()) % options.size(); 
+            if (c == 80) selected = (selected + 1) % options.size(); 
+        } else if (c == 'w' || c == 'W') {
+            selected = (selected - 1 + options.size()) % options.size();
+        } else if (c == 's' || c == 'S') {
+            selected = (selected + 1) % options.size();
+        } else if (c == 13) { // Phím Enter
+            if (selected == 0) {
+                break;
+            } else if (selected == 1) {
+                vector<string> modeOpts = {"Easy (Cham)", "Normal (Mac dinh)", "Hard (Nhanh + Co rac)", "Quay lai"};
+                int modeChoice = drawMenu(modeOpts, "CHON DO KHO");
+                
+                if (modeChoice == 0) currentMode = EASY_MODE;
+                else if (modeChoice == 1) currentMode = NORMAL_MODE;
+                else if (modeChoice == 2) currentMode = HARD_MODE;
+                
+                applyGameMode();
+            } else if (selected == 2) {
+                system("cls");
+                loadBestScore();
+                cout << "\n=========================================\n";
+                cout << "         BANG XEP HANG (KY LUC)          \n";
+                cout << "=========================================\n\n";
+                cout << "      Diem cao nhat hien tai: " << bestScore << "\n\n";
+                cout << "=========================================\n";
+                cout << "       Nhan phim bat ky de quay lai...   \n";
+                _getch();
+            } else if (selected == 3) {
+                exit(0);
+            }
         }
     }
     system("cls");
@@ -467,6 +508,10 @@ int main() {
                     if (canHold) {
                         if (holdPiece == nullptr) {
                             holdPiece = currentPiece;
+                            holdPiece->resetPos();  
+                            
+                            currentPiece = nullptr; 
+                            
                             spawnNewBlock(false);
                         } else {
                             Piece* temp = currentPiece;
@@ -477,6 +522,7 @@ int main() {
                         canHold = false;
                     }
                 }
+                
 
                 if (c == ' ') {
                     while (currentPiece->canMove(0, 1, board)) {
