@@ -151,67 +151,101 @@ void updateGameSpeedAfterClear(int clearedLines) {
     }
 }
 
+void drawFrame(int x, int y, int width, int height, string title) {
+    gotoxy(x, y); cout << "╭";
+    for (int i = 0; i < width - 2; i++) cout << "─";
+    cout << "╮";
+    
+    if (!title.empty()) {
+        gotoxy(x + 2, y); cout << " " << title << " ";
+    }
+
+    for (int i = 1; i < height - 1; i++) {
+        gotoxy(x, y + i); cout << "│";
+        gotoxy(x + width - 1, y + i); cout << "│";
+    }
+
+    gotoxy(x, y + height - 1); cout << "╰";
+    for (int i = 0; i < width - 2; i++) cout << "─";
+    cout << "╯";
+}
+
 void drawGameInfo() {
-    gotoxy(W * 2 + 5, 1);
-    cout << "Mode : " << getModeName() << "        ";
-
-    gotoxy(W * 2 + 5, 2);
-    cout << "Speed: " << gameSpeed << " ms       ";
-
-    gotoxy(W * 2 + 5, 4);
-    cout << "Controls:";
-
-    gotoxy(W * 2 + 5, 5);
-    cout << "A/D or <-/->: Move";
-
-    gotoxy(W * 2 + 5, 6);
-    cout << "W or ^      : Rotate";
-
-    gotoxy(W * 2 + 5, 7);
-    cout << "S/X or v    : Soft Drop";
-
-    gotoxy(W * 2 + 5, 8);
-    cout << "Space       : Hard Drop";
-
-    gotoxy(W * 2 + 5, 9);
-    cout << "P: Pause | Q: Quit";
-
-    gotoxy(W * 2 + 5, 11);
+    int infoX = W * 2 + 4;
+    int infoY = 0;         
+    
+    drawFrame(infoX, infoY, 36, 7, "GAME STATUS");
+    gotoxy(infoX + 2, infoY + 2); cout << "Mode : " << getModeName() << "        ";
+    gotoxy(infoX + 2, infoY + 3); cout << "Speed: " << gameSpeed << " ms       ";
     if (currentMode == HARD_MODE) {
-        cout << "Hard: " << HARD_GARBAGE_CHANCE << "% garbage/spawn";
+        gotoxy(infoX + 2, infoY + 4); cout << "Hard : " << HARD_GARBAGE_CHANCE << "% garbage";
     } else {
-        cout << "                         ";
+        gotoxy(infoX + 2, infoY + 4); cout << "                         ";
+    }
+
+    drawFrame(infoX, infoY + 8, 36, 9, "CONTROLS");
+    gotoxy(infoX + 2, infoY + 10); cout << "A/D | <-/-> : Move";
+    gotoxy(infoX + 2, infoY + 11); cout << "W   | ^     : Rotate";
+    gotoxy(infoX + 2, infoY + 12); cout << "S/X | v     : Soft Drop";
+    gotoxy(infoX + 2, infoY + 13); cout << "Space       : Hard Drop";
+    gotoxy(infoX + 2, infoY + 14); cout << "P: Pause | Q: Quit";
+    
+}
+
+int drawMenu(const vector<string>& options, const string& title) {
+    int selected = 0;
+    while (true) {
+        system("cls");
+        cout << "\n=========================================\n";
+        cout << "          " << title << "\n";
+        cout << "=========================================\n\n";
+        
+        for (int i = 0; i < options.size(); i++) {
+            if (i == selected) {
+                cout << "      >> " << options[i] << " <<\n";
+            } else {
+                cout << "         " << options[i] << "\n";
+            }
+        }
+        
+        cout << "\n=========================================\n";
+        cout << " Dung mui ten ^/v hoac W/S de di chuyen.\n Enter de chon.";
+        
+        char c = _getch();
+        if (c == -32 || c == 224) {
+            c = _getch();
+            if (c == 72) selected = (selected - 1 + options.size()) % options.size(); // Lên
+            if (c == 80) selected = (selected + 1) % options.size(); // Xuống
+        } else if (c == 'w' || c == 'W') {
+            selected = (selected - 1 + options.size()) % options.size();
+        } else if (c == 's' || c == 'S') {
+            selected = (selected + 1) % options.size();
+        } else if (c == 13) {
+            return selected;
+        }
     }
 }
 
-void showModeMenu() {
-    system("cls");
-    cout << "==============================\n";
-    cout << "          TETRIS GAME         \n";
-    cout << "==============================\n";
-    cout << "1. Easy Mode   - Toc do cham\n";
-    cout << "2. Normal Mode - Toc do mac dinh\n";
-    cout << "3. Hard Mode   - Toc do nhanh + co the xuat hien gach rac\n";
-    cout << "==============================\n";
-    cout << "Chon che do choi (1-3): ";
-
+void showMainMenu() {
     while (true) {
-        char choice = _getch();
-        if (choice == '1') {
-            currentMode = EASY_MODE;
+        vector<string> mainOpts = {"Choi ngay", "Chon do kho", "Thoat"};
+        int choice = drawMenu(mainOpts, "TETRIS GAME");
+        
+        if (choice == 0) {
             break;
-        }
-        if (choice == '2') {
-            currentMode = NORMAL_MODE;
-            break;
-        }
-        if (choice == '3') {
-            currentMode = HARD_MODE;
-            break;
+        } else if (choice == 1) {
+            vector<string> modeOpts = {"Easy (Cham)", "Normal (Mac dinh)", "Hard (Nhanh + Co rac)", "Quay lai"};
+            int modeChoice = drawMenu(modeOpts, "CHON DO KHO");
+            
+            if (modeChoice == 0) currentMode = EASY_MODE;
+            else if (modeChoice == 1) currentMode = NORMAL_MODE;
+            else if (modeChoice == 2) currentMode = HARD_MODE;
+            
+            applyGameMode();
+        } else if (choice == 2) {
+            exit(0);
         }
     }
-
-    applyGameMode();
     system("cls");
 }
 
@@ -472,7 +506,7 @@ int main()
     nextPiece = createRandomPiece();
     nextPiece->initShape();
     
-    showModeMenu();
+    showMainMenu();
     initBoard();
     spawnNewBlock(false);
     
