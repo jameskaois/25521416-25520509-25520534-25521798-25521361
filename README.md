@@ -25,7 +25,7 @@ Mục tiêu của người chơi là cố gắng sống càng lâu càng tốt v
 **1. Clone project:**
 
 ```bash
-git clone [https://github.com/jameskaois/25521416-25520509-25520534-25521798-25521361.git](https://github.com/jameskaois/25521416-25520509-25520534-25521798-25521361.git)
+git clone https://github.com/jameskaois/25521416-25520509-25520534-25521798-25521361.git
 cd 25521416-25520509-25520534-25521798-25521361
 ```
 
