@@ -39,6 +39,10 @@ public:
         for (int j = 0; j < 4; j++)
             dest[i][j] = shape[i][j];
     }
+    void resetPos() {
+        x = W / 2 - 2;
+        y = 1;
+    }
 };
 
 class PieceO : public Piece {
