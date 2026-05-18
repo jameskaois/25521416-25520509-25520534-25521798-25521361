@@ -3,31 +3,71 @@
 #include <ctime>
 #include <conio.h>
 #include <windows.h>
-#include "Piece.h"
 #include <mmsystem.h>
 #include <string>
 #include <fstream> 
+#include "Piece.h"
 
 using namespace std;
 
 #pragma comment(lib, "winmm.lib")
 
-char board[H][W];
-Piece* currentPiece;
-Piece* nextPiece = nullptr;
-Piece* holdPiece = nullptr;
-bool canHold = true;
-clock_t lastDropTime;
-int gameSpeed = 500; 
+#define H 20
+#define W 20
 
+enum GameMode {
+    EASY_MODE = 1,
+    NORMAL_MODE = 2,
+    HARD_MODE = 3
+};
+
+GameMode currentMode = NORMAL_MODE;
+
+const int EASY_GAME_SPEED = 1000;
+const int NORMAL_GAME_SPEED = 500;
+const int HARD_GAME_SPEED = 300;
+
+const int EASY_MIN_SPEED = 120;
+const int NORMAL_MIN_SPEED = 70;
+const int HARD_MIN_SPEED = 50;
+
+const int HARD_GARBAGE_CHANCE = 25;
+const int HARD_GARBAGE_HOLES = 2;
+
+int gameSpeed = NORMAL_GAME_SPEED; 
+char board[H][W] = {};
+
+// Biến điểm & hệ thống
 int score = 0;
 int bestScore = 0;
 int lines = 0;
 int level = 1;
 
-enum GameMode { EASY_MODE, NORMAL_MODE, HARD_MODE };
-GameMode currentMode = NORMAL_MODE; 
-const int HARD_GARBAGE_CHANCE = 20;
+Piece* currentPiece = nullptr;
+Piece* nextPiece = nullptr;
+Piece* holdPiece = nullptr;
+bool canHold = true;
+clock_t lastDropTime;
+
+const DWORD SOUND_FLAGS = SND_FILENAME | SND_ASYNC | SND_NODEFAULT;
+
+void playRotateSound() {
+    PlaySound(TEXT("sounds\\rotate.wav"), NULL, SOUND_FLAGS);
+}
+
+void playLandSound() {
+    PlaySound(TEXT("sounds\\land.wav"), NULL, SOUND_FLAGS);
+}
+
+void playClearLineSound() {
+    PlaySound(TEXT("sounds\\clear_line.wav"), NULL, SOUND_FLAGS);
+}
+
+void rotateCurrentPieceWithSound() {
+    if (currentPiece == nullptr) return;
+    currentPiece->rotate(board);
+    playRotateSound();
+}
 
 void loadBestScore() {
     std::ifstream file("bestscore.txt");
@@ -61,65 +101,56 @@ void calculateScore(int linesCleared) {
     }
 }
 
-void gotoxy(int x, int y)
-{
+void gotoxy(int x, int y) {
     COORD coord;
     coord.X = x;
     coord.Y = y;
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
 
-void hideCursor()
-{
+void hideCursor() {
     HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_CURSOR_INFO info;
     info.dwSize = 100;
     info.bVisible = FALSE;
     SetConsoleCursorInfo(consoleHandle, &info);
 }
-void initBoard()
-{
+
+int getMinimumSpeed() {
+    switch (currentMode) {
+        case EASY_MODE: return EASY_MIN_SPEED;
+        case NORMAL_MODE: return NORMAL_MIN_SPEED;
+        case HARD_MODE: return HARD_MIN_SPEED;
+        default: return NORMAL_MIN_SPEED;
+    }
+}
+
+void applyGameMode() {
+    switch (currentMode) {
+        case EASY_MODE:
+            gameSpeed = EASY_GAME_SPEED; 
+            break;
+        case NORMAL_MODE:
+            gameSpeed = NORMAL_GAME_SPEED; 
+            break;
+        case HARD_MODE:
+            gameSpeed = HARD_GAME_SPEED; 
+            break;
+    }
+}
+
+void initBoard() {
     score = 0;
     lines = 0;
     level = 1;
     loadBestScore();
 
-    for (int i = 0; i < H; i++)
-    {
-        for (int j = 0; j < W; j++)
-        {
-            if (i == 0 || i == H - 1 || j == 0 || j == W - 1)
-            {
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
                 board[i][j] = '#';
-            }
-            else
-            {
+            } else {
                 board[i][j] = ' ';
-            }
-        }
-    }
-}
-
-void drawBoard()
-{
-    for (int i = 0; i < H; i++)
-    {
-        for (int j = 0; j < W; j++)
-        {
-            gotoxy(j * 2, i);
-            if (board[i][j] == '#') {
-                if (i == 0 && j == 0) cout << "╭─";
-                else if (i == 0 && j == W - 1) cout << "╮ ";
-                else if (i == H - 1 && j == 0) cout << "╰─";
-                else if (i == H - 1 && j == W - 1) cout << "╯ ";
-                else if (i == 0 || i == H - 1) cout << "──";
-                else cout << "│ ";
-            } 
-            else if (board[i][j] != ' ') {
-                cout << "██";
-            }
-            else {
-                cout << "  ";
             }
         }
     }
@@ -181,26 +212,13 @@ void drawGameInfo() {
     gotoxy(infoX + 2, infoY + 12); cout << "Level : " << level << "        ";
     gotoxy(infoX + 2, infoY + 13); cout << "Mode  : " << getModeName() << "        "; 
 
-    drawFrame(infoX, infoY + 16, 32, 9, "CONTROLS");
-    gotoxy(infoX + 2, infoY + 18); cout << "A/D: Move";
-    gotoxy(infoX + 2, infoY + 19); cout << "W : Rotate";
-    gotoxy(infoX + 2, infoY + 20); cout << "S : Soft Drop";
-    gotoxy(infoX + 2, infoY + 21); cout << "C : Hold Block";
-}
-
-//
-void applyGameMode() {
-    switch (currentMode) {
-        case EASY_MODE:
-            gameSpeed = 800; 
-            break;
-        case NORMAL_MODE:
-            gameSpeed = 500; 
-            break;
-        case HARD_MODE:
-            gameSpeed = 300; 
-            break;
-    }
+    drawFrame(infoX, infoY + 16, 36, 10, "CONTROLS");
+    gotoxy(infoX + 2, infoY + 18); cout << "A/D | <-/-> : Move";
+    gotoxy(infoX + 2, infoY + 19); cout << "W   | ^     : Rotate";
+    gotoxy(infoX + 2, infoY + 20); cout << "S   | v     : Soft Drop";
+    gotoxy(infoX + 2, infoY + 21); cout << "Space       : Hard Drop";
+    gotoxy(infoX + 2, infoY + 22); cout << "C           : Hold Block";
+    gotoxy(infoX + 2, infoY + 23); cout << "P: Pause | Q: Quit";
 }
 
 int drawMenu(const vector<string>& options, const string& title) {
@@ -260,155 +278,254 @@ void showMainMenu() {
     system("cls");
 }
 
-Piece* getRandomPiece()
-{
-    int type = rand() % 7;
-    switch (type)
-    {
-    case 0: return new PieceO();
-    case 1: return new PieceI();
-    case 2: return new PieceT();
-    case 3: return new PieceL();
-    case 4: return new PieceJ();
-    case 5: return new PieceS();
-    case 6: return new PieceZ();
+void addHardModeGarbageLine() {
+    bool hole[W] = {};
+
+    for (int count = 0; count < HARD_GARBAGE_HOLES; count++) {
+        int randomHole;
+        do {
+            randomHole = 1 + rand() % (W - 2);
+        } while (hole[randomHole]);
+
+        hole[randomHole] = true;
     }
-    return nullptr;
+
+    for (int i = 1; i < H - 2; i++) {
+        for (int j = 1; j < W - 1; j++) {
+            board[i][j] = board[i + 1][j];
+        }
+    }
+
+    for (int j = 1; j < W - 1; j++) {
+        board[H - 2][j] = hole[j] ? ' ' : 'G';
+    }
 }
 
-void checkLine()
-{
-    int linesClearedThisTurn = 0; 
-    for (int i = H - 2; i > 0; i--)
-    {
-        bool full = true;
-        for (int j = 1; j < W - 1; j++)
-        {
-            if (board[i][j] == ' ')
-            {
+void maybeAddHardModeGarbageLine() {
+    if (currentMode != HARD_MODE) return;
+
+    int randomPercent = rand() % 100;
+    if (randomPercent < HARD_GARBAGE_CHANCE) {
+        addHardModeGarbageLine();
+    }
+}
+
+void draw() {
+    gotoxy(0,0);
+    string frame = "";
+    for (int i = 0; i < H; i++){
+        for (int j = 0; j < W; j++){
+            if (board[i][j] == '#') {
+                if (i == 0 && j == 0) frame += "╭─";
+                else if (i == 0 && j == W - 1) frame += "╮ ";
+                else if (i == H - 1 && j == 0) frame += "╰─";
+                else if (i == H - 1 && j == W - 1) frame += "╯ ";
+                else if (i == 0 || i == H - 1) frame += "──";
+                else frame += "│ ";
+            }     
+            else if (board[i][j] == ' ') frame += "  ";      
+            else frame += "██";
+        }
+        frame += "\n";
+    }
+    cout << frame;
+    drawGameInfo();
+}
+
+int removeLine() {
+    vector<int> fullLines;
+    
+    for (int i = H - 2; i >= 1; i--) {
+        bool full = true; 
+        for (int j = 1; j < W - 1; j++) {
+            if (board[i][j] == ' ' || board[i][j] == 'G') {
                 full = false;
                 break;
             }
         }
-
-        if (full)
-        {
-            linesClearedThisTurn++;
-            PlaySound(TEXT("sounds/clear_line.wav"), NULL, SND_FILENAME | SND_ASYNC);
-            for (int k = i; k > 1; k--)
-            {
-                for (int j = 1; j < W - 1; j++)
-                {
-                    board[k][j] = board[k - 1][j];
-                }
-            }
-            i++;
+        if (full) {
+            fullLines.push_back(i);
         }
     }
-    
-    if (linesClearedThisTurn > 0) {
-        calculateScore(linesClearedThisTurn);
+
+    if (fullLines.empty()) return 0; 
+
+    playClearLineSound();
+
+    for (int blink = 0; blink < 3; blink++) {
+        for (int i : fullLines) {
+            for (int j = 1; j < W - 1; j++) board[i][j] = ' ';
+        }
+        draw();
+        Sleep(10);
+
+        for (int i : fullLines) {
+            for (int j = 1; j < W - 1; j++) board[i][j] = 'O'; 
+        }
+        draw();
+        Sleep(10);
     }
+
+    int writeRow = H - 2;
+    for (int readRow = H - 2; readRow >= 1; readRow--) {
+        bool isFull = false;
+        for (int r : fullLines) {
+            if (r == readRow) {
+                isFull = true;
+                break;
+            }
+        }
+
+        if (!isFull) {
+            for (int j = 1; j < W - 1; j++) {
+                board[writeRow][j] = board[readRow][j];
+            }
+            writeRow--;
+        }
+    }
+
+    while (writeRow >= 1) {
+        for (int j = 1; j < W - 1; j++) {
+            board[writeRow][j] = ' ';
+        }
+        writeRow--;
+    }
+
+    draw();
+    return fullLines.size(); 
 }
 
-int main()
-{
+Piece* createRandomPiece() {
+    int b = rand() % 7;
+    switch(b) {
+        case 0: return new PieceO();
+        case 1: return new PieceI();
+        case 2: return new PieceT();
+        case 3: return new PieceL();
+        case 4: return new PieceJ();
+        case 5: return new PieceS();
+        case 6: return new PieceZ();
+    }
+    return nullptr;
+}
+
+void spawnNewBlock(bool allowGarbage = true) {
+    if (allowGarbage) {
+        maybeAddHardModeGarbageLine();
+    }
+
+    Piece* oldPiece = currentPiece;
+    currentPiece = nextPiece;
+    nextPiece = createRandomPiece();
+
+    if (currentPiece != nullptr) currentPiece->initShape();
+    if (nextPiece != nullptr) nextPiece->initShape();
+    canHold = true;
+
+    if (oldPiece != nullptr) delete oldPiece;
+}
+
+int main() {
     SetConsoleOutputCP(CP_UTF8);
     hideCursor();
     srand(time(0));
     
     showMainMenu(); 
-
     initBoard();
-    currentPiece = getRandomPiece();
+
+    currentPiece = createRandomPiece();
     currentPiece->initShape();
-    nextPiece = getRandomPiece();
+    nextPiece = createRandomPiece();
     nextPiece->initShape();
     holdPiece = nullptr;
-    canHold = true;
+    
+    spawnNewBlock(false); 
+    
+    system("cls");
     lastDropTime = clock();
-
-    while (true)
-    {
-        drawBoard();
-        drawGameInfo();
-        currentPiece->block2Board(board);
-
-        if (_kbhit())
-        {
+    
+    while (1){
+        currentPiece->boardDelBlock(board);
+        
+        while (_kbhit()){
             char c = _getch();
-            currentPiece->boardDelBlock(board);
-
-            if (c == 'a')
-            {
-                if (currentPiece->canMove(-1, 0, board))
-                {
-                    currentPiece->moveLeft();
-                }
-            }
-            else if (c == 'd')
-            {
-                if (currentPiece->canMove(1, 0, board))
-                {
-                    currentPiece->moveRight();
-                }
-            }
-            else if (c == 's')
-            {
-                if (currentPiece->canMove(0, 1, board))
-                {
-                    currentPiece->moveDown();
-                }
-            }
-            else if (c == 'w')
-            {
-                currentPiece->rotate(board); 
-                PlaySound(TEXT("sounds/rotate.wav"), NULL, SND_FILENAME | SND_ASYNC);
-            }
-            else if (c == 'c' || c == 'C')
-            {
-                if (canHold)
-                {
-                    if (holdPiece == nullptr) {
-                        holdPiece = currentPiece;
-                        currentPiece = nextPiece;
-                        nextPiece = getRandomPiece();
-                        nextPiece->initShape();
-                    } else {
-                        Piece* temp = currentPiece;
-                        currentPiece = holdPiece;
-                        holdPiece = temp;
-                    }
-                    holdPiece->resetPos();
-                    canHold = false;
-                }
-            }
             
-            currentPiece->block2Board(board);
-        }
-
-        if (clock() - lastDropTime > gameSpeed)
-        {
-            currentPiece->boardDelBlock(board);
-            if (currentPiece->canMove(0, 1, board))
-            {
-                currentPiece->moveDown();
-            }
-            else
-            {
-                currentPiece->block2Board(board);
-                checkLine();
-                PlaySound(TEXT("sounds/land.wav"), NULL, SND_FILENAME | SND_ASYNC);
-                delete currentPiece;
-                currentPiece = nextPiece;
-                nextPiece = getRandomPiece();
-                nextPiece->initShape();
-                canHold = true;
+            if (c == -32 || c == 224) {
+                c = _getch();
+                if (c == 75 && currentPiece->canMove(-1, 0, board)) currentPiece->moveLeft();  
+                if (c == 77 && currentPiece->canMove(1, 0, board)) currentPiece->moveRight(); 
+                if (c == 72) rotateCurrentPieceWithSound();                                   
+                if (c == 80 && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();  
+            } else {
+                if ((c=='a' || c=='A') && currentPiece->canMove(-1, 0, board)) currentPiece->moveLeft();
+                if ((c=='d' || c=='D') && currentPiece->canMove(1, 0, board)) currentPiece->moveRight();
+                if (c=='w' || c=='W') rotateCurrentPieceWithSound();            
                 
-                if (!currentPiece->canMove(0, 0, board))
-                {
-                    gotoxy(0, H + 2);
-                    cout << "Game Over!\n";
+                if ((c=='s' || c=='S' || c=='x' || c=='X') && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();    
+                
+                if (c == 'c' || c == 'C') {
+                    if (canHold) {
+                        if (holdPiece == nullptr) {
+                            holdPiece = currentPiece;
+                            spawnNewBlock(false);
+                        } else {
+                            Piece* temp = currentPiece;
+                            currentPiece = holdPiece;
+                            holdPiece = temp;
+                            currentPiece->resetPos(); 
+                        }
+                        canHold = false;
+                    }
+                }
+
+                if (c == ' ') {
+                    while (currentPiece->canMove(0, 1, board)) {
+                        currentPiece->moveDown();
+                    }
+                    lastDropTime = clock() - gameSpeed; 
+                }
+
+                if (c == 'p' || c == 'P') {
+                    gotoxy(W * 2 + 6, 15);
+                    cout << "Tạm dừng     "; 
+                    while (true) {
+                        if (_kbhit()) {
+                            char resumeKey = _getch();
+                            if (resumeKey == -32 || resumeKey == 224) _getch(); 
+                            break;
+                        }
+                        Sleep(100); 
+                    }
+                }
+
+                if (c == 'q' || c == 'Q') {
+                    exit(0);
+                }
+            }
+        }
+        currentPiece->block2Board(board);
+        draw();
+
+        if (clock() - lastDropTime > gameSpeed) {
+            currentPiece->boardDelBlock(board);
+            
+            if (currentPiece->canMove(0, 1, board)) {
+                currentPiece->moveDown();
+            } else {
+                currentPiece->block2Board(board);
+                playLandSound();
+                
+                int clearedLines = removeLine();
+                calculateScore(clearedLines);
+                
+                spawnNewBlock();
+
+                if (!currentPiece->canMove(0, 0, board)) {
+                    currentPiece->block2Board(board); 
+                    draw();        
+                    gotoxy(W * 2 + 6, 16);
+                    cout << "GAME OVER!";
+                    Sleep(2000);
                     break;
                 }
             }
@@ -416,7 +533,7 @@ int main()
             lastDropTime = clock();
         }
 
-        Sleep(50);
+        Sleep(30); 
     }
 
     return 0;

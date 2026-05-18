@@ -20,6 +20,30 @@ Mục tiêu của người chơi là cố gắng sống càng lâu càng tốt v
 
 ---
 
+## Hướng dẫn cài đặt và chạy
+
+**1. Clone project:**
+
+```bash
+git clone https://github.com/jameskaois/25521416-25520509-25520534-25521798-25521361.git
+cd 25521416-25520509-25520534-25521798-25521361
+```
+
+**2. Cài đặt môi trường:**
+
+Đảm bảo máy tính của bạn chạy hệ điều hành Windows và đã cài đặt trình biên dịch C++ (ví dụ: MinGW để dùng lệnh g++).
+
+**3. Biên dịch và thực thi:**
+
+Mở terminal tại thư mục vừa clone về và chạy lệnh biên dịch (lưu ý phải có cờ `-lwinmm` để liên kết thư viện âm thanh):
+
+```bash
+g++ main.cpp Piece.cpp -o Tetris.exe -lwinmm
+./Tetris.exe
+```
+
+---
+
 ## Cách chơi
 
 Hãy tưởng tượng game giống như xếp gạch.
