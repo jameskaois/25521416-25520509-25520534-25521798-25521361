@@ -188,6 +188,7 @@ void drawGameInfo() {
     gotoxy(infoX + 2, infoY + 21); cout << "C : Hold Block";
 }
 
+//
 void applyGameMode() {
     switch (currentMode) {
         case EASY_MODE:
