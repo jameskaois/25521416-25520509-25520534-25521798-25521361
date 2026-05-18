@@ -1,3 +1,4 @@
+#include <windows.h>
 #include "Piece.h"
 
 Piece::Piece()

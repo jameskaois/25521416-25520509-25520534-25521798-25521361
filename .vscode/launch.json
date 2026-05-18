@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "d:/KNNN/tetris/25521416-25520509-25520534-25521798-25521361",
-      "program": "d:/KNNN/tetris/25521416-25520509-25520534-25521798-25521361/build/Debug/outDebug",
+      "cwd": "d:/KNNN/Game_Tetris/25521416-25520509-25520534-25521798-25521361",
+      "program": "d:/KNNN/Game_Tetris/25521416-25520509-25520534-25521798-25521361/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [
