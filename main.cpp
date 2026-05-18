@@ -36,7 +36,8 @@ const int HARD_GARBAGE_HOLES = 2;
 
 int gameSpeed = NORMAL_GAME_SPEED; 
 char board[H][W] = {};
-
+int boardColor[H][W] = {};
+void setColor(int color);
 int score = 0;
 int bestScore = 0;
 int lines = 0;
@@ -186,6 +187,7 @@ void drawPieceUI(Piece* p, int startX, int startY) {
         for (int j = 0; j < 4; j++) {
             gotoxy(startX + j * 2, startY + i);
             if (p != nullptr && p->getCell(i, j) != ' ') {
+                setColor(boardColor[i][j]);
                 cout << "██"; 
             } else {
                 cout << "  "; 
@@ -334,11 +336,13 @@ void addHardModeGarbageLine() {
     for (int i = 1; i < H - 2; i++) {
         for (int j = 1; j < W - 1; j++) {
             board[i][j] = board[i + 1][j];
+            boardColor[i][j] = boardColor[i + 1][j];
         }
     }
 
     for (int j = 1; j < W - 1; j++) {
         board[H - 2][j] = hole[j] ? ' ' : 'G';
+        boardColor[H - 2][j] = hole[j] ? 7 : 8;
     }
 }
 
@@ -420,6 +424,7 @@ int removeLine() {
         if (!isFull) {
             for (int j = 1; j < W - 1; j++) {
                 board[writeRow][j] = board[readRow][j];
+                boardColor[writeRow][j] = boardColor[readRow][j];
             }
             writeRow--;
         }
@@ -428,6 +433,7 @@ int removeLine() {
     while (writeRow >= 1) {
         for (int j = 1; j < W - 1; j++) {
             board[writeRow][j] = ' ';
+            boardColor[writeRow][j] = 7;
         }
         writeRow--;
     }
@@ -486,7 +492,7 @@ int main() {
     lastDropTime = clock();
     
     while (1){
-        currentPiece->boardDelBlock(board);
+        currentPiece->boardDelBlock(board,boardColor);
         
         while (_kbhit()){
             char c = _getch();
@@ -549,25 +555,25 @@ int main() {
                 }
             }
         }
-        currentPiece->block2Board(board);
+        currentPiece->block2Board(board,boardColor);
         draw();
 
         if (clock() - lastDropTime > gameSpeed) {
-            currentPiece->boardDelBlock(board);
+            currentPiece->boardDelBlock(board,boardColor);
             
             if (currentPiece->canMove(0, 1, board)) {
                 currentPiece->moveDown();
             } else {
-                currentPiece->block2Board(board);
+                currentPiece->block2Board(board,boardColor);
                 playLandSound();
                 
                 int clearedLines = removeLine();
                 calculateScore(clearedLines);
-                
+                setColor(currentPiece->getColor());
                 spawnNewBlock();
 
                 if (!currentPiece->canMove(0, 0, board)) {
-                    currentPiece->block2Board(board); 
+                    currentPiece->block2Board(board,boardColor); 
                     draw();        
                     gotoxy(W * 2 + 6, 16);
                     cout << "GAME OVER!";
@@ -575,7 +581,7 @@ int main() {
                     break;
                 }
             }
-            currentPiece->block2Board(board);
+            currentPiece->block2Board(board,boardColor);
             lastDropTime = clock();
         }
 
