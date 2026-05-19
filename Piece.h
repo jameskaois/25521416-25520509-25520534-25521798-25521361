@@ -15,7 +15,7 @@ protected:
 public:
         Piece();
 
-    
+
     virtual void initShape() = 0;
 
     void moveLeft();
@@ -34,10 +34,10 @@ public:
 
     int getX();
     int getY();
-                                
+
 
     char getCell(int i, int j);
-    void getShape(char dest[4][4]) 
+    void getShape(char dest[4][4])
     {
     for (int i = 0; i < 4; i++)
         for (int j = 0; j < 4; j++)
@@ -80,7 +80,7 @@ public:
 class PieceT : public Piece {
 public:
     void initShape() override {
-        shape[1][1] = 'T'; 
+        shape[1][1] = 'T';
         shape[2][0] = 'T'; shape[2][1] = 'T'; shape[2][2] = 'T';
     }
     PieceT() { color = 13; }
@@ -89,7 +89,7 @@ public:
 class PieceL : public Piece {
 public:
     void initShape() override {
-        shape[1][2] = 'L'; 
+        shape[1][2] = 'L';
         shape[2][0] = 'L'; shape[2][1] = 'L'; shape[2][2] = 'L';
     }
     PieceL() { color = 6; }
@@ -98,7 +98,7 @@ public:
 class PieceJ : public Piece {
 public:
     void initShape() override {
-        shape[1][0] = 'J'; 
+        shape[1][0] = 'J';
         shape[2][0] = 'J'; shape[2][1] = 'J'; shape[2][2] = 'J';
     }
     PieceJ() { color = 11; }
