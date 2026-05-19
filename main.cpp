@@ -12,7 +12,7 @@ using namespace std;
 
 #pragma comment(lib, "winmm.lib")
 
-#define H 20
+#define H 27
 #define W 20
 
 enum GameMode {
@@ -149,8 +149,10 @@ void initBoard() {
         for (int j = 0; j < W; j++) {
             if (i == 0 || i == H - 1 || j == 0 || j == W - 1) {
                 board[i][j] = '#';
+                boardColor[i][j] = 7;
             } else {
                 board[i][j] = ' ';
+                boardColor[i][j] = 7;
             }
         }
     }
@@ -187,19 +189,22 @@ void drawPieceUI(Piece* p, int startX, int startY) {
         for (int j = 0; j < 4; j++) {
             gotoxy(startX + j * 2, startY + i);
             if (p != nullptr && p->getCell(i, j) != ' ') {
-                setColor(boardColor[i][j]);
+                setColor(p->getColor());
                 cout << "██"; 
             } else {
+                setColor(7);
                 cout << "  "; 
             }
         }
     }
+    setColor(7);
 }
 
 void drawGameInfo() {
     int infoX = W * 2 + 4; 
     int infoY = 0;
     
+    setColor(7);
     drawFrame(infoX, infoY, 15, 6, "HOLD (C)");
     drawFrame(infoX + 17, infoY, 15, 6, "NEXT");
 
@@ -342,7 +347,7 @@ void addHardModeGarbageLine() {
 
     for (int j = 1; j < W - 1; j++) {
         board[H - 2][j] = hole[j] ? ' ' : 'G';
-        boardColor[H - 2][j] = hole[j] ? 7 : 8;
+        boardColor[H - 2][j] = hole[j] ? 7 : 8; // Gạch rác màu xám đen
     }
 }
 
@@ -357,6 +362,7 @@ void maybeAddHardModeGarbageLine() {
 
 Piece* createGhost(Piece* current)
 {
+    if (!current) return nullptr;
     Piece* ghost = nullptr;
 
     if (dynamic_cast<PieceO*>(current)) ghost = new PieceO();
@@ -370,68 +376,117 @@ Piece* createGhost(Piece* current)
     if (!ghost) return nullptr;
 
     ghost->initShape();
-
-    // copy vị trí
-    while (ghost->getX() < current->getX()) ghost->moveRight();
-    while (ghost->getX() > current->getX()) ghost->moveLeft();
-    while (ghost->getY() < current->getY()) ghost->moveDown();
+    
+    char s[4][4];
+    current->getShape(s);
+    ghost->setShape(s);
+    ghost->setX(current->getX());
+    ghost->setY(current->getY());
 
     return ghost;
 }
 
 void draw() {
     gotoxy(0,0);
-    string frame = "";
-    for (int i = 0; i < H; i++){
-        for (int j = 0; j < W; j++){
-            if (board[i][j] == '#') {
-                if (i == 0 && j == 0) frame += "╭─";
-                else if (i == 0 && j == W - 1) frame += "╮ ";
-                else if (i == H - 1 && j == 0) frame += "╰─";
-                else if (i == H - 1 && j == W - 1) frame += "╯ ";
-                else if (i == 0 || i == H - 1) frame += "──";
-                else frame += "│ ";
-            }     
-            else if (board[i][j] == ' ') frame += "  ";      
-            else frame += "██";
+    string buffer = "";
+    int lastColor = -1;
+
+    char rChar[H][W];
+    int rColor[H][W];
+
+    // Chép Board gốc vào bộ đệm tạm thời
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            rChar[i][j] = board[i][j];
+            rColor[i][j] = boardColor[i][j];
         }
-        frame += "\n";
     }
-    cout << frame;
 
-    // ✅ DRAW GHOST
-if (currentMode != HARD_MODE && currentPiece != nullptr)
-{
-    Piece* ghost = createGhost(currentPiece);
-
-    if (ghost != nullptr)
-    {
-        while (ghost->canMove(0, 1, board))
-        {
-            ghost->moveDown();
+    // Phủ Ghost lên bộ đệm
+    Piece* ghost = nullptr;
+    if (currentMode != HARD_MODE && currentPiece != nullptr) {
+        ghost = createGhost(currentPiece);
+        if (ghost) {
+            while (ghost->canMove(0, 1, board)) ghost->moveDown();
+            for(int i=0; i<4; i++){
+                for(int j=0; j<4; j++){
+                    if(ghost->getCell(i,j) != ' ') {
+                        int gy = ghost->getY() + i;
+                        int gx = ghost->getX() + j;
+                        // Chỉ vẽ bóng nếu chỗ đó chưa có gạch
+                        if(gy>=0 && gy<H && gx>=0 && gx<W && rChar[gy][gx] == ' ') {
+                            rChar[gy][gx] = 'g'; // Ký tự g dùng cho ghost
+                            rColor[gy][gx] = 8;  // Màu xám
+                        }
+                    }
+                }
+            }
+            delete ghost;
         }
+    }
 
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                if (ghost->getCell(i, j) != ' ') {
-                    int gx = ghost->getX() + j;
-                    int gy = ghost->getY() + i;
-
-                    if (board[gy][gx] == ' ') {
-                        gotoxy(gx * 2, gy);
-                        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 8); // xám
-                        cout << "[]";
-                        SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
+    // Phủ khối gạch đang rơi lên bộ đệm
+    if (currentPiece != nullptr) {
+        for(int i=0; i<4; i++){
+            for(int j=0; j<4; j++){
+                if(currentPiece->getCell(i,j) != ' ') {
+                    int cy = currentPiece->getY() + i;
+                    int cx = currentPiece->getX() + j;
+                    if(cy>=0 && cy<H && cx>=0 && cx<W) {
+                        rChar[cy][cx] = 'C';
+                        rColor[cy][cx] = currentPiece->getColor();
                     }
                 }
             }
         }
-
-        delete ghost;
     }
-}
 
+    // In 1 lần ra màn hình với thuật toán gom nhóm màu để tăng FPS
+    for (int i = 0; i < H; i++) {
+        for (int j = 0; j < W; j++) {
+            int cColor = rColor[i][j];
+            char cChar = rChar[i][j];
+            string s = "";
 
+            if (cChar == '#') {
+                cColor = 7; 
+                if (i == 0 && j == 0) s = "╭─";
+                else if (i == 0 && j == W - 1) s = "╮ ";
+                else if (i == H - 1 && j == 0) s = "╰─";
+                else if (i == H - 1 && j == W - 1) s = "╯ ";
+                else if (i == 0 || i == H - 1) s = "──";
+                else s = "│ ";
+            } else if (cChar == ' ') {
+                cColor = 7;
+                s = "  ";
+            } else if (cChar == 'g') {
+                s = "[]"; // Ghost
+            } else if (cChar == 'O') {
+                cColor = 12; // Chớp đỏ khi ăn điểm
+                s = "██";
+            } else {
+                s = "██"; // Block bình thường hoặc Block rác (G)
+            }
+
+            if (cColor != lastColor) {
+                if (!buffer.empty()) {
+                    setColor(lastColor);
+                    cout << buffer;
+                    buffer = "";
+                }
+                lastColor = cColor;
+            }
+            buffer += s;
+        }
+        buffer += "\n";
+    }
+    
+    if (!buffer.empty()) {
+        setColor(lastColor);
+        cout << buffer;
+    }
+
+    setColor(7);
     drawGameInfo();
 }
 
@@ -441,7 +496,8 @@ int removeLine() {
     for (int i = H - 2; i >= 1; i--) {
         bool full = true; 
         for (int j = 1; j < W - 1; j++) {
-            if (board[i][j] == ' ' || board[i][j] == 'G') {
+            // Block rác 'G' giờ được tính như một block bình thường
+            if (board[i][j] == ' ') {
                 full = false;
                 break;
             }
@@ -457,16 +513,20 @@ int removeLine() {
 
     for (int blink = 0; blink < 3; blink++) {
         for (int i : fullLines) {
-            for (int j = 1; j < W - 1; j++) board[i][j] = ' ';
+            for (int j = 1; j < W - 1; j++) {
+                board[i][j] = ' '; 
+            }
         }
         draw();
-        Sleep(10);
+        Sleep(30);
 
         for (int i : fullLines) {
-            for (int j = 1; j < W - 1; j++) board[i][j] = 'O'; 
+            for (int j = 1; j < W - 1; j++) {
+                board[i][j] = 'O'; 
+            }
         }
         draw();
-        Sleep(10);
+        Sleep(30);
     }
 
     int writeRow = H - 2;
@@ -530,121 +590,158 @@ void spawnNewBlock(bool allowGarbage = true) {
     if (oldPiece != nullptr) delete oldPiece;
 }
 
-
 int main() {
     SetConsoleOutputCP(CP_UTF8);
+    system("mode con cols=125 lines=40"); 
     hideCursor();
     srand(time(0));
     
-    showMainMenu(); 
-    initBoard();
-
-    currentPiece = createRandomPiece();
-    currentPiece->initShape();
-    nextPiece = createRandomPiece();
-    nextPiece->initShape();
-    holdPiece = nullptr;
+    bool backToMenu = true;
     
-    spawnNewBlock(false); 
-    
-    system("cls");
-    lastDropTime = clock();
-    
-    while (1){
-        currentPiece->boardDelBlock(board,boardColor);
+    while (true) { 
+        if (backToMenu) {
+            showMainMenu();
+            backToMenu = false;
+        }
         
-        while (_kbhit()){
-            char c = _getch();
+        initBoard();
+
+        if (currentPiece) { delete currentPiece; currentPiece = nullptr; }
+        if (nextPiece) { delete nextPiece; nextPiece = nullptr; }
+        if (holdPiece) { delete holdPiece; holdPiece = nullptr; }
+
+        currentPiece = createRandomPiece();
+        currentPiece->initShape();
+        nextPiece = createRandomPiece();
+        nextPiece->initShape();
+        holdPiece = nullptr;
+        canHold = true;
+        
+        spawnNewBlock(false); 
+        
+        system("cls");
+        lastDropTime = clock();
+        
+        while (true) { 
             
-            if (c == -32 || c == 224) {
-                c = _getch();
-                if (c == 75 && currentPiece->canMove(-1, 0, board)) currentPiece->moveLeft();  
-                if (c == 77 && currentPiece->canMove(1, 0, board)) currentPiece->moveRight(); 
-                if (c == 72) rotateCurrentPieceWithSound();                                   
-                if (c == 80 && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();  
-            } else {
-                if ((c=='a' || c=='A') && currentPiece->canMove(-1, 0, board)) currentPiece->moveLeft();
-                if ((c=='d' || c=='D') && currentPiece->canMove(1, 0, board)) currentPiece->moveRight();
-                if (c=='w' || c=='W') rotateCurrentPieceWithSound();            
+            while (_kbhit()){
+                char c = _getch();
                 
-                if ((c=='s' || c=='S' || c=='x' || c=='X') && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();    
-                
-                if (c == 'c' || c == 'C') {
-                    if (canHold) {
-                        if (holdPiece == nullptr) {
-                            holdPiece = currentPiece;
-                            holdPiece->resetPos();  
-                            
-                            currentPiece = nullptr; 
-                            
-                            spawnNewBlock(false);
-                        } else {
-                            Piece* temp = currentPiece;
-                            currentPiece = holdPiece;
-                            holdPiece = temp;
-                            currentPiece->resetPos(); 
+                if (c == -32 || c == 224) {
+                    c = _getch();
+                    if (c == 75 && currentPiece->canMove(-1, 0, board)) currentPiece->moveLeft();  
+                    if (c == 77 && currentPiece->canMove(1, 0, board)) currentPiece->moveRight(); 
+                    if (c == 72) rotateCurrentPieceWithSound();                                   
+                    if (c == 80 && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();  
+                } else {
+                    if ((c=='a' || c=='A') && currentPiece->canMove(-1, 0, board)) currentPiece->moveLeft();
+                    if ((c=='d' || c=='D') && currentPiece->canMove(1, 0, board)) currentPiece->moveRight();
+                    if (c=='w' || c=='W') rotateCurrentPieceWithSound();            
+                    
+                    if ((c=='s' || c=='S' || c=='x' || c=='X') && currentPiece->canMove(0, 1, board)) currentPiece->moveDown();    
+                    
+                    if (c == 'c' || c == 'C') {
+                        if (canHold) {
+                            if (holdPiece == nullptr) {
+                                holdPiece = currentPiece;
+                                holdPiece->resetPos();  
+                                
+                                currentPiece = nullptr; 
+                                spawnNewBlock(false);
+                            } else {
+                                Piece* temp = currentPiece;
+                                currentPiece = holdPiece;
+                                holdPiece = temp;
+                                currentPiece->resetPos(); 
+                            }
+                            canHold = false;
                         }
-                        canHold = false;
                     }
-                }
-                
 
-                if (c == ' ') {
-                    while (currentPiece->canMove(0, 1, board)) {
-                        currentPiece->moveDown();
-                    }
-                    lastDropTime = clock() - gameSpeed; 
-                }
-
-                if (c == 'p' || c == 'P') {
-                    gotoxy(W * 2 + 6, 15);
-                    cout << "Tạm dừng     "; 
-                    while (true) {
-                        if (_kbhit()) {
-                            char resumeKey = _getch();
-                            if (resumeKey == -32 || resumeKey == 224) _getch(); 
-                            break;
+                    if (c == ' ') {
+                        while (currentPiece->canMove(0, 1, board)) {
+                            currentPiece->moveDown();
                         }
-                        Sleep(100); 
+                        lastDropTime = clock() - gameSpeed; 
                     }
-                }
 
-                if (c == 'q' || c == 'Q') {
-                    exit(0);
+                    if (c == 'p' || c == 'P') {
+                        setColor(7);
+                        gotoxy(W * 2 + 6, 15);
+                        cout << "Tạm dừng     "; 
+                        while (true) {
+                            if (_kbhit()) {
+                                char resumeKey = _getch();
+                                if (resumeKey == -32 || resumeKey == 224) _getch(); 
+                                break;
+                            }
+                            Sleep(100); 
+                        }
+                        gotoxy(W * 2 + 6, 15);
+                        cout << "             "; 
+                    }
+
+                    if (c == 'q' || c == 'Q') {
+                        exit(0);
+                    }
                 }
             }
-        }
-        currentPiece->block2Board(board,boardColor);
-        draw();
 
-        if (clock() - lastDropTime > gameSpeed) {
-            currentPiece->boardDelBlock(board,boardColor);
-            
-            if (currentPiece->canMove(0, 1, board)) {
-                currentPiece->moveDown();
-            } else {
-                currentPiece->block2Board(board,boardColor);
-                playLandSound();
-                
-                int clearedLines = removeLine();
-                calculateScore(clearedLines);
-                setColor(currentPiece->getColor());
-                spawnNewBlock();
+            if (clock() - lastDropTime > gameSpeed) {
+                if (currentPiece->canMove(0, 1, board)) {
+                    currentPiece->moveDown();
+                } else {
+                    currentPiece->block2Board(board, boardColor);
+                    playLandSound();
+                    
+                    Piece* temp = currentPiece;
+                    currentPiece = nullptr; 
+                    
+                    int clearedLines = removeLine();
+                    
+                    currentPiece = temp; 
+                    
+                    calculateScore(clearedLines);
+                    spawnNewBlock();
 
-                if (!currentPiece->canMove(0, 0, board)) {
-                    currentPiece->block2Board(board,boardColor); 
-                    draw();        
-                    gotoxy(W * 2 + 6, 16);
-                    cout << "GAME OVER!";
-                    Sleep(2000);
-                    break;
+                    // ======= GAME OVER =======
+                    if (!currentPiece->canMove(0, 0, board)) {
+                        currentPiece->block2Board(board, boardColor); 
+                        draw();        
+                        
+                        // Đã tăng width của bảng lên 40 và dịch sang phải một chút
+                        int boxX = W * 2 + 40; 
+                        int boxY = 7;          
+                        
+                        setColor(7); 
+                        drawFrame(boxX, boxY, 40, 11, "");
+                        gotoxy(boxX + 15, boxY + 1); cout << "GAME OVER!";
+                        gotoxy(boxX + 4, boxY + 3);  cout << "Ky luc      : " << bestScore << "      ";
+                        gotoxy(boxX + 4, boxY + 4);  cout << "Diem cua ban: " << score << "      ";
+                        gotoxy(boxX + 4, boxY + 5);  cout << "So hang xoa : " << lines << "      ";
+                        gotoxy(boxX, boxY + 7);      cout << "├──────────────────────────────────────┤";
+                        gotoxy(boxX + 3, boxY + 8);  cout << "[R] Choi lai | [M] Menu | [Q] Thoat";
+                        
+                        while (true) {
+                            char ch = _getch();
+                            if (ch == 'r' || ch == 'R') {
+                                break; 
+                            } else if (ch == 'm' || ch == 'M') {
+                                backToMenu = true;
+                                break; 
+                            } else if (ch == 'q' || ch == 'Q') {
+                                exit(0); 
+                            }
+                        }
+                        break; 
+                    }
                 }
+                lastDropTime = clock();
             }
-            currentPiece->block2Board(board,boardColor);
-            lastDropTime = clock();
-        }
 
-        Sleep(30); 
+            draw();
+            Sleep(10); 
+        }
     }
 
     return 0;

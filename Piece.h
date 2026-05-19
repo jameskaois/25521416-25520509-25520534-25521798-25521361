@@ -2,7 +2,7 @@
 #include <iostream>
 using namespace std;
 
-#define H 20
+#define H 27
 #define W 20
 
 class Piece
@@ -43,6 +43,14 @@ public:
         for (int j = 0; j < 4; j++)
             dest[i][j] = shape[i][j];
     }
+    void setShape(char src[4][4]) {
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                shape[i][j] = src[i][j];
+    }
+    void setX(int nx) { x = nx; }
+    void setY(int ny) { y = ny; }
+
     void resetPos() {
         x = W / 2 - 2;
         y = 1;
