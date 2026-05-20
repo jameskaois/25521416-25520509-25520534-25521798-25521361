@@ -38,6 +38,7 @@ int gameSpeed = NORMAL_GAME_SPEED;
 char board[H][W] = {};
 int boardColor[H][W] = {};
 void setColor(int color);
+int getMinimumSpeed();
 int score = 0;
 int bestScore = 0;
 int lines = 0;
@@ -85,7 +86,7 @@ void saveBestScore() {
     }
 }
 
-// Tính điểm combo, cập nhật level và lưu kỷ lục
+// Tính điểm combo, cập nhật level và lưu kỷ lục, tăng tốc độ rơi
 void calculateScore(int linesCleared) {
     if (linesCleared == 0) return;
     if (linesCleared == 1) score += 100 * level;
@@ -93,8 +94,17 @@ void calculateScore(int linesCleared) {
     else if (linesCleared == 3) score += 500 * level;
     else if (linesCleared >= 4) score += 800 * level;
 
+    int oldLevel = level;
     lines += linesCleared;
     level = (lines / 10) + 1;
+
+    if (level > oldLevel) {
+        gameSpeed -= 3; 
+        int minSpeed = getMinimumSpeed();
+        if (gameSpeed < minSpeed) {
+            gameSpeed = minSpeed;
+        }
+    }
 
     if (score > bestScore) {
         bestScore = score;
