@@ -221,9 +221,9 @@ void drawGameInfo() {
     gotoxy(infoX + 2, infoY + 13); cout << "Mode  : " << getModeName() << "        "; 
 
     drawFrame(infoX, infoY + 16, 36, 10, "CONTROLS");
-    gotoxy(infoX + 2, infoY + 18); cout << "A/D | <-/-> : Move";
-    gotoxy(infoX + 2, infoY + 19); cout << "W   | ^     : Rotate";
-    gotoxy(infoX + 2, infoY + 20); cout << "S   | v     : Soft Drop";
+    gotoxy(infoX + 2, infoY + 18); cout << "A/D | ←/→ : Move";
+    gotoxy(infoX + 2, infoY + 19); cout << "W   | ↑     : Rotate";
+    gotoxy(infoX + 2, infoY + 20); cout << "S   | ↓     : Soft Drop";
     gotoxy(infoX + 2, infoY + 21); cout << "Space       : Hard Drop";
     gotoxy(infoX + 2, infoY + 22); cout << "C           : Hold Block";
     gotoxy(infoX + 2, infoY + 23); cout << "P: Pause | Q: Quit";
@@ -246,7 +246,7 @@ int drawMenu(const vector<string>& options, const string& title) {
         }
         
         cout << "\n=========================================\n";
-        cout << " Dung mui ten ^/v hoac W/S de di chuyen.\n Enter de chon.";
+        cout << " Dung mui ten ↑/↓ hoac W/S de di chuyen.\n Enter de chon.";
         
         char c = _getch();
         if (c == -32 || c == 224) {
@@ -287,7 +287,7 @@ void showMainMenu() {
         }
         
         cout << "\n===============================================\n";
-        cout << "   Dung mui ten ^/v hoac W/S de chon. \n   Enter de xac nhan.\n";
+        cout << "   Dung mui ten ↑/↓ hoac W/S de chon. \n   Enter de xac nhan.\n";
         
         char c = _getch();
         if (c == -32 || c == 224) {
