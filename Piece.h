@@ -15,7 +15,7 @@ protected:
 public:
         Piece();
 
-    
+    // Khởi tạo hình dáng ma trận 4x4 cho từng loại khối gạch
     virtual void initShape() = 0;
 
     void moveLeft();

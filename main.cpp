@@ -31,8 +31,8 @@ const int EASY_MIN_SPEED = 120;
 const int NORMAL_MIN_SPEED = 70;
 const int HARD_MIN_SPEED = 50;
 
-const int HARD_GARBAGE_CHANCE = 25;
-const int HARD_GARBAGE_HOLES = 2;
+const int HARD_GARBAGE_CHANCE = 15;
+const int HARD_GARBAGE_HOLES = 1;
 
 int gameSpeed = NORMAL_GAME_SPEED; 
 char board[H][W] = {};
@@ -85,6 +85,7 @@ void saveBestScore() {
     }
 }
 
+// Tính điểm combo, cập nhật level và lưu kỷ lục
 void calculateScore(int linesCleared) {
     if (linesCleared == 0) return;
     if (linesCleared == 1) score += 100 * level;
@@ -139,6 +140,7 @@ void applyGameMode() {
     }
 }
 
+// Khởi tạo bảng game trống và viền tường
 void initBoard() {
     score = 0;
     lines = 0;
@@ -300,7 +302,7 @@ void showMainMenu() {
             if (selected == 0) {
                 break;
             } else if (selected == 1) {
-                vector<string> modeOpts = {"Easy (Cham)", "Normal (Mac dinh)", "Hard (Nhanh + Co rac)", "Quay lai"};
+                vector<string> modeOpts = {"Easy (Cham)", "Normal (Mac dinh)", "Hard (Nhanh + Co block rac)", "Quay lai"};
                 int modeChoice = drawMenu(modeOpts, "CHON DO KHO");
                 
                 if (modeChoice == 0) currentMode = EASY_MODE;
@@ -347,7 +349,7 @@ void addHardModeGarbageLine() {
 
     for (int j = 1; j < W - 1; j++) {
         board[H - 2][j] = hole[j] ? ' ' : 'G';
-        boardColor[H - 2][j] = hole[j] ? 7 : 8; // Gạch rác màu xám đen
+        boardColor[H - 2][j] = hole[j] ? 7 : 8; // Block rác màu xám đen
     }
 }
 
@@ -386,6 +388,7 @@ Piece* createGhost(Piece* current)
     return ghost;
 }
 
+// Vẽ toàn bộ giao diện: bảng game, block đang rơi, bóng mờ (ghost) và UI
 void draw() {
     gotoxy(0,0);
     string buffer = "";
@@ -413,7 +416,7 @@ void draw() {
                     if(ghost->getCell(i,j) != ' ') {
                         int gy = ghost->getY() + i;
                         int gx = ghost->getX() + j;
-                        // Chỉ vẽ bóng nếu chỗ đó chưa có gạch
+                        // Chỉ vẽ bóng nếu chỗ đó chưa có block
                         if(gy>=0 && gy<H && gx>=0 && gx<W && rChar[gy][gx] == ' ') {
                             rChar[gy][gx] = 'g'; // Ký tự g dùng cho ghost
                             rColor[gy][gx] = 8;  // Màu xám
@@ -425,7 +428,7 @@ void draw() {
         }
     }
 
-    // Phủ khối gạch đang rơi lên bộ đệm
+    // Phủ block đang rơi lên bộ đệm
     if (currentPiece != nullptr) {
         for(int i=0; i<4; i++){
             for(int j=0; j<4; j++){
@@ -465,7 +468,7 @@ void draw() {
                 cColor = 12; // Chớp đỏ khi ăn điểm
                 s = "██";
             } else {
-                s = "██"; // Block bình thường hoặc Block rác (G)
+                s = "██"; // Block bình thường hoặc block rác (G)
             }
 
             if (cColor != lastColor) {
@@ -490,6 +493,7 @@ void draw() {
     drawGameInfo();
 }
 
+// Kiểm tra, xóa các hàng đã đầy, dồn block xuống và trả về số hàng đã xóa
 int removeLine() {
     vector<int> fullLines;
     
@@ -574,6 +578,7 @@ Piece* createRandomPiece() {
     return nullptr;
 }
 
+// Tạo block mới, đẩy block từ Next vào sân, và xử lý block rác (Hard mode)
 void spawnNewBlock(bool allowGarbage = true) {
     if (allowGarbage) {
         maybeAddHardModeGarbageLine();
@@ -590,6 +595,7 @@ void spawnNewBlock(bool allowGarbage = true) {
     if (oldPiece != nullptr) delete oldPiece;
 }
 
+// Vòng lặp chính: Quản lý luồng game, bắt phím, xử lý rơi và Game Over
 int main() {
     SetConsoleOutputCP(CP_UTF8);
     system("mode con cols=125 lines=40"); 
@@ -668,7 +674,7 @@ int main() {
                     if (c == 'p' || c == 'P') {
                         setColor(7);
                         gotoxy(W * 2 + 6, 15);
-                        cout << "Tạm dừng     "; 
+                        cout << "RESUME     "; 
                         while (true) {
                             if (_kbhit()) {
                                 char resumeKey = _getch();
@@ -709,7 +715,6 @@ int main() {
                         currentPiece->block2Board(board, boardColor); 
                         draw();        
                         
-                        // Đã tăng width của bảng lên 40 và dịch sang phải một chút
                         int boxX = W * 2 + 40; 
                         int boxY = 7;          
                         

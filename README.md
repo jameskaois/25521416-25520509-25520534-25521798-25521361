@@ -1,6 +1,6 @@
-## Source code game Tetris của nhóm 10 - SS004.Q27 - UIT
+# Tetris Console C++ - Nhóm 10 (UIT)
 
-### Thành viên trong nhóm
+## Thành viên nhóm (Đồ án Kỹ năng Nghề nghiệp SS004.Q27)
 
 - 25521416: Cao Hoàng Phúc
 - 25520509: Phan Huy Hào
@@ -8,106 +8,84 @@
 - 25521798: Trần Hoàng Thông
 - 25521361: Lê Viết Phát
 
----
+## Giới thiệu
 
-## Giới thiệu game
+Đây là tựa game **Tetris (Xếp gạch)** cổ điển được phát triển bằng ngôn ngữ **C++**, chạy trực tiếp trên môi trường Console của Windows. Game mang lại trải nghiệm mượt mà với nhiều tính năng hiện đại được tích hợp sẵn, giao diện màu sắc rõ ràng và hiệu ứng âm thanh sinh động.
 
-Đây là game **Tetris** được viết bằng ngôn ngữ **C++** và chạy trên màn hình console.
+Mục tiêu của bạn là sinh tồn lâu nhất có thể, dọn dẹp các hàng gạch và ghi được điểm số kỷ lục!
 
-Trong game, các khối gạch sẽ rơi từ trên xuống. Người chơi cần di chuyển và xoay các khối gạch sao cho chúng xếp kín thành một hàng ngang. Khi một hàng được lấp đầy, hàng đó sẽ biến mất.
+## Tính năng nổi bật
 
-Mục tiêu của người chơi là cố gắng sống càng lâu càng tốt và không để các khối gạch chạm lên tới đỉnh màn hình.
+- **Bóng mờ (Ghost Piece):** Hiển thị trước vị trí rơi của khối gạch dưới đáy, giúp người chơi căn chỉnh và thả gạch chính xác.
+- **Cơ chế Giữ (Hold Block):** Cho phép "cất" một khối gạch đang rơi vào kho chứa để dành sử dụng cho những tình huống nguy cấp (bấm phím `C`).
+- **Hệ thống Điểm Chuỗi & Cấp độ:** Áp dụng luật tính điểm chuẩn, khuyến khích dọn dẹp nhiều hàng cùng lúc. Tự động tăng độ khó (Level) sau mỗi 10 hàng xóa được.
+- **Lưu Kỷ Lục (High Score):** Điểm số cao nhất (Best Score) được ghi vào file `bestscore.txt` và lưu giữ qua những lần mở game sau.
+- **3 Chế độ chơi đa dạng:** - _Easy / Normal:_ Phù hợp để giải trí và luyện tập.
+  - _Hard:_ Thử thách thực sự với tốc độ rơi "chóng mặt" và cơ chế **Gạch rác (Garbage Lines)** liên tục đùn lên từ dưới đáy.
+- **Âm thanh sống động:** Tích hợp hiệu ứng âm thanh khi xoay gạch, chạm đáy và ăn điểm.
 
----
+## Hướng dẫn Cài đặt & Chạy game
 
-## Hướng dẫn cài đặt và chạy
-
-**1. Clone project:**
-
-```bash
-git clone https://github.com/jameskaois/25521416-25520509-25520534-25521798-25521361.git
-cd 25521416-25520509-25520534-25521798-25521361
-```
-
-**2. Cài đặt môi trường:**
-
-Đảm bảo máy tính của bạn chạy hệ điều hành Windows và đã cài đặt trình biên dịch C++ (ví dụ: MinGW để dùng lệnh g++).
-
-**3. Biên dịch và thực thi:**
-
-Mở terminal tại thư mục vừa clone về và chạy lệnh biên dịch (lưu ý phải có cờ `-lwinmm` để liên kết thư viện âm thanh):
+**1. Clone mã nguồn:**
+Mở Command Prompt và chạy lệnh sau:
 
 ```bash
-g++ main.cpp Piece.cpp -o Tetris.exe -lwinmm
-./Tetris.exe
+git clone https://github.com/jameskaois/tetris-uit-nhom-10.git
+cd tetris-uit-nhom-10
 ```
 
----
+**2. Yêu cầu môi trường:**
 
-## Cách chơi
+- Máy tính chạy hệ điều hành **Windows**.
+- Đã cài đặt trình biên dịch **G++** (thông qua MinGW).
 
-Hãy tưởng tượng game giống như xếp gạch.
+**3. Biên dịch và Thực thi:**
+Mở Command Prompt tại thư mục project vừa clone. **Bắt buộc** thêm cờ `-lwinmm` vào lệnh biên dịch để liên kết thư viện âm thanh của Windows:
 
-Các khối gạch sẽ rơi xuống từ phía trên.  
-Bạn cần điều khiển chúng sang trái, sang phải, xoay khối gạch và cho chúng rơi xuống đúng vị trí.
+```bash
+g++ main.cpp Piece.cpp -o tetris.exe -lwinmm
+```
 
-Khi bạn xếp kín một hàng ngang, hàng đó sẽ được xóa.
+Khởi chạy game bằng lệnh:
 
-Nếu gạch chất quá cao và không còn chỗ cho khối mới xuất hiện, game sẽ kết thúc.
-
----
+```bash
+tetris.exe
+```
 
 ## Phím điều khiển
 
-| Phím                        | Chức năng                                         |
-| --------------------------- | ------------------------------------------------- |
-| `A` hoặc mũi tên trái       | Di chuyển khối gạch sang trái                     |
-| `D` hoặc mũi tên phải       | Di chuyển khối gạch sang phải                     |
-| `W` hoặc mũi tên lên        | Xoay khối gạch                                    |
-| `S`, `X` hoặc mũi tên xuống | Cho khối gạch rơi nhanh hơn                       |
-| `Space`                     | Thả khối gạch rơi xuống ngay lập tức              |
-| `P`                         | Tạm dừng game, sau đó bấm phím bất kỳ để tiếp tục |
-| `Q`                         | Thoát game                                        |
+| Phím      | Chức năng                                 |
+| :-------- | :---------------------------------------- |
+| `A` / `←` | Di chuyển khối gạch sang trái             |
+| `D` / `→` | Di chuyển khối gạch sang phải             |
+| `W` / `↑` | Xoay khối gạch 90 độ                      |
+| `S` / `↓` | Rơi nhanh dần (Soft Drop)                 |
+| `Space`   | Thả rơi chạm đáy ngay lập tức (Hard Drop) |
+| `C`       | Giữ / Đổi khối gạch (Hold Block)          |
+| `P`       | Tạm dừng game (Pause)                     |
+| `Q`       | Thoát game (Quit)                         |
 
----
+## Hệ thống Tính điểm & Level
 
-## Chế độ chơi
+Điểm số của bạn sẽ được nhân với hệ số **Level** hiện tại. Sống sót càng lâu, điểm thưởng càng lớn:
 
-Game có 3 chế độ:
+- Xóa 1 hàng: `100 x Level`
+- Xóa 2 hàng: `300 x Level`
+- Xóa 3 hàng: `500 x Level`
+- Xóa 4 hàng: `800 x Level`
 
-### Easy Mode
+_(Cứ mỗi 10 hàng được xóa, bạn sẽ tăng 1 Level và gạch sẽ rơi nhanh hơn)._
 
-Chế độ dễ.  
-Khối gạch rơi chậm hơn, phù hợp với người mới chơi.
+## Cấu trúc thư mục (Lưu ý về Âm thanh)
 
-### Normal Mode
-
-Chế độ bình thường.  
-Tốc độ vừa phải, phù hợp để chơi cơ bản.
-
-### Hard Mode
-
-Chế độ khó.  
-Khối gạch rơi nhanh hơn. Ngoài ra, trong lúc chơi có thể xuất hiện thêm các hàng gạch rác ở phía dưới để làm game khó hơn.
-
----
-
-## Hiệu ứng âm thanh
-
-Game có hiệu ứng âm thanh cho một số hành động:
-
-- Khi xoay khối gạch
-- Khi khối gạch chạm đáy
-- Khi người chơi xóa được hàng
-
-Game có thư mục `sounds`, hãy đặt thư mục này cùng chỗ với file `.exe` để âm thanh hoạt động đúng.
-
-Ví dụ:
+Để game phát được âm thanh, hãy đảm bảo thư mục `sounds` (chứa các file `.wav`) luôn nằm cùng một chỗ với file thực thi `tetris.exe`. Cấu trúc chuẩn sẽ trông như sau:
 
 ```text
-tetris.exe
-sounds/
-  rotate.wav
-  land.wav
-  clear_line.wav
+/tetris-uit-nhom-10
+├── tetris.exe           <-- Chạy file này
+├── bestscore.txt        <-- File tự sinh ra để lưu kỷ lục
+└── sounds/              <-- Thư mục âm thanh (không được đổi tên)
+    ├── rotate.wav
+    ├── land.wav
+    └── clear_line.wav
 ```

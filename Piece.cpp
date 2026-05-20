@@ -32,6 +32,7 @@ void Piece::moveDown()
     y++;
 }
 
+// Xoay khối gạch 90 độ và kiểm tra va chạm
 void Piece::rotate(char board[H][W])
 {
     char temp[4][4];
@@ -71,6 +72,7 @@ void Piece::rotate(char board[H][W])
     }
 }
 
+// Kiểm tra va chạm: xem khối gạch có di chuyển được tới khoảng dx, dy không
 bool Piece::canMove(int dx, int dy, char board[H][W])
 {
     for (int i = 0; i < 4; i++)
@@ -94,6 +96,7 @@ bool Piece::canMove(int dx, int dy, char board[H][W])
     return true;
 }
 
+// Chốt vị trí khối gạch vào mảng bảng game khi chạm đáy
 void Piece::block2Board(char board[H][W],int boardColor[H][W])
 {
     for (int i = 0; i < 4; i++)
